@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.beykery.lucener.*;
 import org.lucener.*;
 import org.lucener.test.util.Mappers;
 
