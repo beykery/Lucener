@@ -1,4 +1,4 @@
-package org.beykery.lucener.test;
+package org.lucener.test;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -8,8 +8,8 @@ import org.apache.lucene.search.FieldComparator;
 import org.apache.lucene.search.FieldComparatorSource;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
-import org.beykery.lucener.Lucener;
-import org.beykery.lucener.QueryResult;
+import org.lucener.Lucener;
+import org.lucener.QueryResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.wltea.analyzer.lucene.IKAnalyzer;

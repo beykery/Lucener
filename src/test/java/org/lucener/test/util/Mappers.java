@@ -1,4 +1,4 @@
-package org.beykery.lucener.test.util;
+package org.lucener.test.util;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;

@@ -1,4 +1,4 @@
-package org.beykery.lucener;
+package org.lucener;
 
 import java.util.Collections;
 import java.util.List;

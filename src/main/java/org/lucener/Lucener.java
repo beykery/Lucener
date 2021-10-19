@@ -1,4 +1,4 @@
-package org.beykery.lucener;
+package org.lucener;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.*;

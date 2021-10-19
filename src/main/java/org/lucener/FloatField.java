@@ -1,4 +1,4 @@
-package org.beykery.lucener;
+package org.lucener;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

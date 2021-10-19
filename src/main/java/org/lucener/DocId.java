@@ -1,15 +1,14 @@
-package org.beykery.lucener;
+package org.lucener;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * doc id for unique
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface DoubleField {
-
-    boolean stored() default false;
-
-    boolean sort() default false;
+public @interface DocId {
 }

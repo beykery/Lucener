@@ -1,4 +1,4 @@
-package org.beykery.lucener.test;
+package org.lucener.test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.AllArgsConstructor;
@@ -6,7 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.beykery.lucener.*;
-import org.beykery.lucener.test.util.Mappers;
+import org.lucener.*;
+import org.lucener.test.util.Mappers;
 
 import java.util.List;
 import java.util.Set;

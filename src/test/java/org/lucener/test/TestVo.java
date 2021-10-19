@@ -1,10 +1,10 @@
-package org.beykery.lucener.test;
+package org.lucener.test;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.beykery.lucener.IntField;
+import org.lucener.IntField;
 
 import java.util.List;
 
