@@ -6,8 +6,8 @@ lucene util
 
 ```xml
   <dependency>
-      <groupId>org.lucener</groupId>
+      <groupId>org.beykery</groupId>
       <artifactId>lucener</artifactId>
-      <version>1.0.0</version>
+      <version>1.0.1</version>
   </dependency>
 ```
