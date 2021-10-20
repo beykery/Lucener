@@ -20,6 +20,19 @@ public final class QueryResult<T> {
      */
     private final List<T> result;
 
+    /**
+     * default
+     */
+    public QueryResult() {
+        this(0, Collections.EMPTY_LIST);
+    }
+
+    /**
+     * result with total and result list
+     *
+     * @param total
+     * @param result
+     */
     public QueryResult(long total, List<T> result) {
         this.total = total;
         this.result = result;
