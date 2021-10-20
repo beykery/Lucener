@@ -151,7 +151,7 @@ public class LuceneIndexTest {
     }
 
     @Test
-    public void testAnalyzer() throws IOException {
+    public void tokens() throws IOException {
         String text = "A股一倒中韩渔警冲突调查：韩警平均每天扣1艘中国渔船";
         lucener.tokens(text).forEach(System.out::println);
     }
