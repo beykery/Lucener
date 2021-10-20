@@ -42,4 +42,12 @@ public final class QueryResult<T> {
     public List<T> getResult() {
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "QueryResult{" +
+                "total=" + total +
+                ", result=" + result +
+                '}';
+    }
 }

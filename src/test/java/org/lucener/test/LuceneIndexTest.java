@@ -1,18 +1,14 @@
 package org.lucener.test;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.FieldComparator;
 import org.apache.lucene.search.FieldComparatorSource;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
-import org.lucener.Lucener;
-import org.lucener.QueryResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.wltea.analyzer.lucene.IKAnalyzer;
+import org.lucener.Lucener;
+import org.lucener.QueryResult;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -70,6 +66,22 @@ public class LuceneIndexTest {
         String id = "9999";
         TestEntity te = lucener.get(id);
         System.out.println(te);
+    }
+
+    @Test
+    public void delete() throws Exception {
+        String id = "9999";
+        lucener.deleteDocuments("did", id);
+        lucener.commit();
+    }
+
+    @Test
+    public void queryByContent() throws Exception {
+        String content = "computer price";
+        String price = "price";
+        String desc = "desc";
+        QueryResult<TestEntity> ret = lucener.query("content", content, 1, null);
+        System.out.println(ret);
     }
 
     @Test
@@ -140,13 +152,7 @@ public class LuceneIndexTest {
 
     @Test
     public void testAnalyzer() throws IOException {
-        Analyzer analyzer = new IKAnalyzer(true);
-        TokenStream stream = analyzer.tokenStream("", "A股一倒中韩渔警冲突调查：韩警平均每天扣1艘中国渔船");
-        CharTermAttribute cta = stream.addAttribute(CharTermAttribute.class);
-        stream.reset();
-        while ((stream.incrementToken())) {
-            System.out.println(cta.toString());
-        }
-        stream.close();
+        String text = "A股一倒中韩渔警冲突调查：韩警平均每天扣1艘中国渔船";
+        lucener.tokens(text).forEach(System.out::println);
     }
 }

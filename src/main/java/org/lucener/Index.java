@@ -35,4 +35,11 @@ public @interface Index {
      * @return
      */
     Class<? extends Analyzer> analyzer() default IKAnalyzer.class;
+
+    /**
+     * ik analyzer use smart
+     *
+     * @return
+     */
+    boolean ikSmart() default false;
 }

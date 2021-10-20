@@ -1,6 +1,8 @@
 package org.lucener;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.CheckIndex;
 import org.apache.lucene.index.IndexWriter;
@@ -131,7 +133,7 @@ public class Lucener<T extends DocSerializable<T>> {
         indexPath = file.getAbsolutePath();
         stored = ian.stored();
         directory = FSDirectory.open(path);
-        analyzer = ian.analyzer() == null ? new IKAnalyzer(true) : (ian.analyzer() == IKAnalyzer.class ? new IKAnalyzer(true) : ian.analyzer().newInstance());
+        analyzer = ian.analyzer() == null ? new IKAnalyzer(ian.ikSmart()) : (ian.analyzer() == IKAnalyzer.class ? new IKAnalyzer(ian.ikSmart()) : ian.analyzer().newInstance());
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         indexWriter = new IndexWriter(directory, indexWriterConfig);
         searcherManager = new SearcherManager(indexWriter, false, false, new SearcherFactory());
@@ -815,6 +817,41 @@ public class Lucener<T extends DocSerializable<T>> {
     }
 
     /**
+     * delete doc
+     *
+     * @param field
+     * @param v
+     */
+    public long deleteDocuments(String field, Object v) throws Exception {
+        Query query = buildQuery(field, v);
+        if (query != null) {
+            return deleteDocuments(query);
+        } else {
+            throw new RuntimeException("query not valid ");
+        }
+    }
+
+    /**
+     * delete from query
+     *
+     * @param queries
+     */
+    public long deleteDocuments(Query... queries) throws IOException {
+        return indexWriter.deleteDocuments(queries);
+    }
+
+    /**
+     * delete from term
+     *
+     * @param terms
+     * @return
+     * @throws IOException
+     */
+    public long deleteDocuments(Term... terms) throws IOException {
+        return indexWriter.deleteDocuments(terms);
+    }
+
+    /**
      * query
      *
      * @param n
@@ -864,29 +901,91 @@ public class Lucener<T extends DocSerializable<T>> {
      */
     public QueryResult<T> queryAfter(ScoreDoc after, String field, Object v, int n, Sort sort) throws Exception {
         QueryResult<T> queryResult = null;
-        List<FieldDesc> list = allFields.get(field);
-        if (!list.isEmpty()) {
-            BooleanQuery.Builder builder = new BooleanQuery.Builder();
-            FieldDesc fd = list.get(list.size() - 1);
-            Class type = fd.getInner();
-            if (type == int.class || type == Integer.class) {
-                builder.add(IntPoint.newExactQuery(field, (Integer) v), BooleanClause.Occur.MUST);
-            } else if (type == long.class || type == Long.class) {
-                builder.add(LongPoint.newExactQuery(field, (Long) v), BooleanClause.Occur.MUST);
-            } else if (type == float.class || type == Float.class) {
-                builder.add(FloatPoint.newExactQuery(field, (Float) v), BooleanClause.Occur.MUST);
-            } else if (type == double.class || type == Double.class) {
-                builder.add(DoublePoint.newExactQuery(field, (Double) v), BooleanClause.Occur.MUST);
-            } else if (type == String.class) {
-                builder.add(new TermQuery(new Term(field, (String) v)), BooleanClause.Occur.MUST);
-            }
+        Query query = buildQuery(field, v);
+        if (query != null) {
             if (sort != null && after != null) {
                 after = (after instanceof FieldDoc) ? after : new FieldDoc(after.doc, after.score);
             }
-            Query query = builder.build();
             queryResult = queryAfter(after, query, n, sort);
         }
         return queryResult == null ? QueryResult.empty() : queryResult;
+    }
+
+    /**
+     * build query for filed
+     *
+     * @param field
+     * @param v
+     * @return
+     */
+    public Query buildQuery(String field, Object v) {
+        List<FieldDesc> list = docId.getField().getName().equals(field) ? Collections.singletonList(docId) : allFields.get(field);
+        if (!list.isEmpty()) {
+            FieldDesc fd = list.get(list.size() - 1);
+            Class type = fd.getInner();
+            if (type == int.class || type == Integer.class) {
+                return IntPoint.newExactQuery(field, (Integer) v);
+            } else if (type == long.class || type == Long.class) {
+                return LongPoint.newExactQuery(field, (Long) v);
+            } else if (type == float.class || type == Float.class) {
+                return FloatPoint.newExactQuery(field, (Float) v);
+            } else if (type == double.class || type == Double.class) {
+                return DoublePoint.newExactQuery(field, (Double) v);
+            } else if (type == String.class) {
+                return new TermQuery(new Term(field, (String) v));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * boolean query builder
+     *
+     * @return
+     */
+    public static BooleanQuery.Builder booleanQuery() {
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        return builder;
+    }
+
+    /**
+     * or
+     *
+     * @param queries
+     * @return
+     */
+    public static void should(BooleanQuery.Builder builder, Query... queries) {
+        Arrays.stream(queries).forEach(q -> builder.add(q, BooleanClause.Occur.SHOULD));
+    }
+
+    /**
+     * must
+     *
+     * @param queries
+     * @return
+     */
+    public static void must(BooleanQuery.Builder builder, Query... queries) {
+        Arrays.stream(queries).forEach(q -> builder.add(q, BooleanClause.Occur.MUST));
+    }
+
+    /**
+     * must not
+     *
+     * @param builder
+     * @param queries
+     */
+    public static void mustNot(BooleanQuery.Builder builder, Query... queries) {
+        Arrays.stream(queries).forEach(q -> builder.add(q, BooleanClause.Occur.MUST_NOT));
+    }
+
+    /**
+     * filter
+     *
+     * @param builder
+     * @param queries
+     */
+    public static void filter(BooleanQuery.Builder builder, Query... queries) {
+        Arrays.stream(queries).forEach(q -> builder.add(q, BooleanClause.Occur.FILTER));
     }
 
     /**
@@ -940,6 +1039,44 @@ public class Lucener<T extends DocSerializable<T>> {
      */
     public IndexWriter.DocStats docStats() {
         return indexWriter.getDocStats();
+    }
+
+    /**
+     * tokens from analyzer
+     *
+     * @param text
+     * @return
+     * @throws IOException
+     */
+    public List<String> tokens(String text) throws IOException {
+        return tokens(analyzer, text);
+    }
+
+    /**
+     * tokens from analyzer
+     *
+     * @param text
+     * @return
+     */
+    public static List<String> tokens(Analyzer analyzer, String text) throws IOException {
+        List<String> tokens = new ArrayList<>();
+        TokenStream stream = null;
+        try {
+            stream = analyzer.tokenStream("", text);
+            CharTermAttribute cta = stream.addAttribute(CharTermAttribute.class);
+            stream.reset();
+            while ((stream.incrementToken())) {
+                tokens.add(cta.toString());
+            }
+            stream.close();
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        } finally {
+            if (stream != null) {
+                stream.close();
+            }
+        }
+        return tokens;
     }
 
     /**

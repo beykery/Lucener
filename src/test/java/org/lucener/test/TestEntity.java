@@ -14,7 +14,7 @@ import java.util.Set;
 /**
  * for test index
  */
-@Index
+@Index(ikSmart = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
