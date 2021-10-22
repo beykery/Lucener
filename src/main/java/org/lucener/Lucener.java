@@ -2,6 +2,7 @@ package org.lucener;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.CheckIndex;
@@ -39,7 +40,7 @@ public class Lucener<T extends DocSerializable<T>> {
     /**
      * analyzer for faceting
      */
-    private final Analyzer analyzer;
+    private final Analyzer defaultAnalyzer;
     /**
      * writer
      */
@@ -133,10 +134,7 @@ public class Lucener<T extends DocSerializable<T>> {
         indexPath = file.getAbsolutePath();
         stored = ian.stored();
         directory = FSDirectory.open(path);
-        analyzer = ian.analyzer() == null ? new IKAnalyzer(ian.ikSmart()) : (ian.analyzer() == IKAnalyzer.class ? new IKAnalyzer(ian.ikSmart()) : ian.analyzer().newInstance());
-        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
-        indexWriter = new IndexWriter(directory, indexWriterConfig);
-        searcherManager = new SearcherManager(indexWriter, false, false, new SearcherFactory());
+        defaultAnalyzer = ian.analyzer() == null ? new IKAnalyzer(ian.ikSmart()) : (ian.analyzer() == IKAnalyzer.class ? new IKAnalyzer(ian.ikSmart()) : ian.analyzer().newInstance());
         fields = new ArrayList<>();
         subFields = new ArrayList<>();
         List<Field> allFiled = new ArrayList<>();
@@ -220,12 +218,34 @@ public class Lucener<T extends DocSerializable<T>> {
             error(entityClass, "DocId not exist");
         }
         // all fields
+        Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
         allFields = new HashMap<>();
-        fields.forEach(item -> allFields.put(item.getField().getName(), Collections.singletonList(item)));
-        subFields.stream().filter(item -> !item.isEmpty()).forEach(item -> {
-            String name = item.stream().map(f -> f.getField().getName()).collect(Collectors.joining("."));
-            allFields.put(name, item);
-        });
+        for (FieldDesc field : fields) {
+            String name = field.getField().getName();
+            allFields.put(name, Collections.singletonList(field));
+            if (field.isTokenized()) {
+                TextField tf = field.getField().getAnnotation(TextField.class);
+                Analyzer fieldAnalyzer = tf.analyzer() == null ? new IKAnalyzer(tf.ikSmart()) : (tf.analyzer() == IKAnalyzer.class ? new IKAnalyzer(tf.ikSmart()) : tf.analyzer().newInstance());
+                fieldAnalyzers.put(name, fieldAnalyzer);
+            }
+        }
+        for (List<FieldDesc> item : subFields) {
+            if (!item.isEmpty()) {
+                String name = item.stream().map(f -> f.getField().getName()).collect(Collectors.joining("."));
+                allFields.put(name, item);
+                FieldDesc field = item.get(item.size() - 1);
+                if (field.isTokenized()) {
+                    TextField tf = field.getField().getAnnotation(TextField.class);
+                    Analyzer fieldAnalyzer = tf.analyzer() == null ? new IKAnalyzer(tf.ikSmart()) : (tf.analyzer() == IKAnalyzer.class ? new IKAnalyzer(tf.ikSmart()) : tf.analyzer().newInstance());
+                    fieldAnalyzers.put(name, fieldAnalyzer);
+                }
+            }
+        }
+        // analyzer
+        PerFieldAnalyzerWrapper wrapper = new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
+        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(wrapper);
+        indexWriter = new IndexWriter(directory, indexWriterConfig);
+        searcherManager = new SearcherManager(indexWriter, false, false, new SearcherFactory());
     }
 
     /**
@@ -1042,14 +1062,14 @@ public class Lucener<T extends DocSerializable<T>> {
     }
 
     /**
-     * tokens from analyzer
+     * tokens from default analyzer
      *
      * @param text
      * @return
      * @throws IOException
      */
     public List<String> tokens(String text) throws IOException {
-        return tokens(analyzer, text);
+        return tokens(defaultAnalyzer, text);
     }
 
     /**
@@ -1162,8 +1182,8 @@ public class Lucener<T extends DocSerializable<T>> {
      *
      * @return
      */
-    public Analyzer analyzer() {
-        return analyzer;
+    public Analyzer defaultAnalyzer() {
+        return defaultAnalyzer;
     }
 
     /**
