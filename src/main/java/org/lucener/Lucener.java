@@ -95,7 +95,7 @@ public class Lucener<T extends DocSerializable<T>> {
      * @param entityClass
      * @return
      */
-    public static <T> Lucener forClass(Class<? extends DocSerializable<T>> entityClass) throws Exception {
+    public synchronized static <T> Lucener forClass(Class<? extends DocSerializable<T>> entityClass) throws Exception {
         if (knownIndex.containsKey(entityClass)) {
             return knownIndex.get(entityClass);
         }

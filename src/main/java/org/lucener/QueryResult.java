@@ -56,6 +56,15 @@ public final class QueryResult<T> {
         return result;
     }
 
+    /**
+     * size of result list
+     *
+     * @return
+     */
+    public int size() {
+        return result == null ? 0 : result.size();
+    }
+
     @Override
     public String toString() {
         return "QueryResult{" +
