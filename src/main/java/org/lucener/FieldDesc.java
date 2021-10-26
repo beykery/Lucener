@@ -45,6 +45,7 @@ public class FieldDesc {
         this.sort = sort;
         this.tokenized = tokenized;
         this.end = end;
+        this.index = index;
     }
 
     public boolean isCollection() {
