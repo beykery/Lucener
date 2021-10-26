@@ -147,7 +147,7 @@ public class Lucener<T extends DocSerializable<T>> {
                 if (fit) {
                     DocId di = f.getAnnotation(DocId.class);
                     f.setAccessible(true);
-                    docId = new FieldDesc(f, false, String.class, false, false, false, true);
+                    docId = new FieldDesc(f, false, String.class, di.stored(), false, false, true, true);
                 } else {
                     error(entityClass, "DocId not fit");
                 }
@@ -156,7 +156,7 @@ public class Lucener<T extends DocSerializable<T>> {
                 if (fit) {
                     IntField an = f.getAnnotation(IntField.class);
                     f.setAccessible(true);
-                    fields.add(new FieldDesc(f, isCollection(f), Integer.class, an.stored(), an.sort(), false, true));
+                    fields.add(new FieldDesc(f, isCollection(f), Integer.class, an.stored(), an.sort(), false, true, an.index()));
                 } else {
                     error(entityClass, "IntField not fit");
                 }
@@ -165,7 +165,7 @@ public class Lucener<T extends DocSerializable<T>> {
                 if (fit) {
                     LongField an = f.getAnnotation(LongField.class);
                     f.setAccessible(true);
-                    fields.add(new FieldDesc(f, isCollection(f), Long.class, an.stored(), an.sort(), false, true));
+                    fields.add(new FieldDesc(f, isCollection(f), Long.class, an.stored(), an.sort(), false, true, an.index()));
                 } else {
                     error(entityClass, "LongField not fit");
                 }
@@ -174,7 +174,7 @@ public class Lucener<T extends DocSerializable<T>> {
                 if (fit) {
                     FloatField an = f.getAnnotation(FloatField.class);
                     f.setAccessible(true);
-                    fields.add(new FieldDesc(f, isCollection(f), Float.class, an.stored(), an.sort(), false, true));
+                    fields.add(new FieldDesc(f, isCollection(f), Float.class, an.stored(), an.sort(), false, true, an.index()));
                 } else {
                     error(entityClass, "FloatField not fit");
                 }
@@ -183,7 +183,7 @@ public class Lucener<T extends DocSerializable<T>> {
                 if (fit) {
                     DoubleField an = f.getAnnotation(DoubleField.class);
                     f.setAccessible(true);
-                    fields.add(new FieldDesc(f, isCollection(f), Double.class, an.stored(), an.sort(), false, true));
+                    fields.add(new FieldDesc(f, isCollection(f), Double.class, an.stored(), an.sort(), false, true, an.index()));
                 } else {
                     error(entityClass, "DoubleField not fit");
                 }
@@ -192,7 +192,7 @@ public class Lucener<T extends DocSerializable<T>> {
                 if (fit) {
                     StringField an = f.getAnnotation(StringField.class);
                     f.setAccessible(true);
-                    fields.add(new FieldDesc(f, isCollection(f), String.class, an.stored(), false, false, true));
+                    fields.add(new FieldDesc(f, isCollection(f), String.class, an.stored(), false, false, true, true));
                 } else {
                     error(entityClass, "StringField not fit");
                 }
@@ -201,7 +201,7 @@ public class Lucener<T extends DocSerializable<T>> {
                 if (fit) {
                     TextField an = f.getAnnotation(TextField.class);
                     f.setAccessible(true);
-                    fields.add(new FieldDesc(f, isCollection(f), String.class, an.stored(), false, true, true));
+                    fields.add(new FieldDesc(f, isCollection(f), String.class, an.stored(), false, true, true, true));
                 } else {
                     error(entityClass, "TextField not fit");
                 }
@@ -259,7 +259,7 @@ public class Lucener<T extends DocSerializable<T>> {
         f.setAccessible(true);
         boolean collection = isCollection(f);
         Class<?> c = getInnerType(f);
-        context.add(new FieldDesc(f, collection, c, false, false, false, false));
+        context.add(new FieldDesc(f, collection, c, false, false, false, false, false));
         List<Field> all = new ArrayList<>();
         allField(c, all);
         for (Field item : all) {
@@ -269,7 +269,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     IntField an = item.getAnnotation(IntField.class);
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
-                    ret.add(new FieldDesc(item, isCollection(item), Integer.class, an.stored(), an.sort(), false, true));
+                    ret.add(new FieldDesc(item, isCollection(item), Integer.class, an.stored(), an.sort(), false, true, an.index()));
                     subFields.add(ret);
                 } else {
                     error(c, "IntField not fit");
@@ -280,7 +280,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     LongField an = item.getAnnotation(LongField.class);
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
-                    ret.add(new FieldDesc(item, isCollection(item), Long.class, an.stored(), an.sort(), false, true));
+                    ret.add(new FieldDesc(item, isCollection(item), Long.class, an.stored(), an.sort(), false, true, an.index()));
                     subFields.add(ret);
                 } else {
                     error(c, "LongField not fit");
@@ -291,7 +291,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     FloatField an = item.getAnnotation(FloatField.class);
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
-                    ret.add(new FieldDesc(item, isCollection(item), Float.class, an.stored(), an.sort(), false, true));
+                    ret.add(new FieldDesc(item, isCollection(item), Float.class, an.stored(), an.sort(), false, true, an.index()));
                     subFields.add(ret);
                 } else {
                     error(c, "FloatField not fit");
@@ -302,7 +302,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     DoubleField an = item.getAnnotation(DoubleField.class);
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
-                    ret.add(new FieldDesc(item, isCollection(item), Double.class, an.stored(), an.sort(), false, true));
+                    ret.add(new FieldDesc(item, isCollection(item), Double.class, an.stored(), an.sort(), false, true, an.index()));
                     subFields.add(ret);
                 } else {
                     error(c, "DoubleField not fit");
@@ -313,7 +313,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     StringField an = item.getAnnotation(StringField.class);
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
-                    ret.add(new FieldDesc(item, isCollection(item), String.class, an.stored(), false, false, true));
+                    ret.add(new FieldDesc(item, isCollection(item), String.class, an.stored(), false, false, true, true));
                     subFields.add(ret);
                 } else {
                     error(c, "StringField not fit");
@@ -324,7 +324,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     TextField an = item.getAnnotation(TextField.class);
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
-                    ret.add(new FieldDesc(item, isCollection(item), String.class, an.stored(), false, true, true));
+                    ret.add(new FieldDesc(item, isCollection(item), String.class, an.stored(), false, true, true, true));
                     subFields.add(ret);
                 } else {
                     error(c, "TextField not fit");
@@ -572,10 +572,10 @@ public class Lucener<T extends DocSerializable<T>> {
                     if (did == null || did.isEmpty()) {
                         throw new NullPointerException("doc id is null ");
                     }
-                    Document doc = new Document();
+                    final Document doc = new Document();
                     for (List<FieldDesc> fs : allFields.values()) {
-                        FieldDesc f = fs.get(fs.size() - 1);  // the end
-                        Object v = value(fs, ob);
+                        final FieldDesc f = fs.get(fs.size() - 1);  // the end
+                        final Object v = value(fs, ob);
                         if (v != null) {
                             Class inner = f.getInner();
                             String name = name(fs);
@@ -584,7 +584,9 @@ public class Lucener<T extends DocSerializable<T>> {
                                 if (inner == int.class || inner == Integer.class) {
                                     Collection<Integer> c = (Collection<Integer>) v;
                                     c.forEach(i -> {
-                                        doc.add(new IntPoint(name, i));
+                                        if (f.isIndex()) {
+                                            doc.add(new IntPoint(name, i));
+                                        }
                                         if (f.isStored()) {
                                             doc.add(new StoredField(name, i));
                                         }
@@ -595,7 +597,9 @@ public class Lucener<T extends DocSerializable<T>> {
                                 } else if (inner == long.class || inner == Long.class) {
                                     Collection<Long> c = (Collection<Long>) v;
                                     c.forEach(i -> {
-                                        doc.add(new LongPoint(name, i));
+                                        if (f.isIndex()) {
+                                            doc.add(new LongPoint(name, i));
+                                        }
                                         if (f.isStored()) {
                                             doc.add(new StoredField(name, i));
                                         }
@@ -606,7 +610,9 @@ public class Lucener<T extends DocSerializable<T>> {
                                 } else if (inner == float.class || inner == Float.class) {
                                     Collection<Float> c = (Collection<Float>) v;
                                     c.forEach(i -> {
-                                        doc.add(new FloatPoint(name, i));
+                                        if (f.isIndex()) {
+                                            doc.add(new FloatPoint(name, i));
+                                        }
                                         if (f.isStored()) {
                                             doc.add(new StoredField(name, i));
                                         }
@@ -617,7 +623,9 @@ public class Lucener<T extends DocSerializable<T>> {
                                 } else if (inner == double.class || inner == Double.class) {
                                     Collection<Double> c = (Collection<Double>) v;
                                     c.forEach(i -> {
-                                        doc.add(new DoublePoint(name, i));
+                                        if (f.isIndex()) {
+                                            doc.add(new DoublePoint(name, i));
+                                        }
                                         if (f.isStored()) {
                                             doc.add(new StoredField(name, i));
                                         }
@@ -640,7 +648,9 @@ public class Lucener<T extends DocSerializable<T>> {
                             else {
                                 if (inner == int.class || inner == Integer.class) {
                                     Integer i = (Integer) v;
-                                    doc.add(new IntPoint(name, i));
+                                    if (f.isIndex()) {
+                                        doc.add(new IntPoint(name, i));
+                                    }
                                     if (f.isStored()) {
                                         doc.add(new StoredField(name, i));
                                     }
@@ -649,7 +659,9 @@ public class Lucener<T extends DocSerializable<T>> {
                                     }
                                 } else if (inner == long.class || inner == Long.class) {
                                     Long i = (Long) v;
-                                    doc.add(new LongPoint(name, i));
+                                    if (f.isIndex()) {
+                                        doc.add(new LongPoint(name, i));
+                                    }
                                     if (f.isStored()) {
                                         doc.add(new StoredField(name, i));
                                     }
@@ -658,7 +670,9 @@ public class Lucener<T extends DocSerializable<T>> {
                                     }
                                 } else if (inner == float.class || inner == Float.class) {
                                     Float i = (Float) v;
-                                    doc.add(new FloatPoint(name, i));
+                                    if (f.isIndex()) {
+                                        doc.add(new FloatPoint(name, i));
+                                    }
                                     if (f.isStored()) {
                                         doc.add(new StoredField(name, i));
                                     }
@@ -668,7 +682,9 @@ public class Lucener<T extends DocSerializable<T>> {
                                     }
                                 } else if (inner == double.class || inner == Double.class) {
                                     Double i = (Double) v;
-                                    doc.add(new DoublePoint(name, i));
+                                    if (f.isIndex()) {
+                                        doc.add(new DoublePoint(name, i));
+                                    }
                                     if (f.isStored()) {
                                         doc.add(new StoredField(name, i));
                                     }
@@ -691,7 +707,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     if (stored) {
                         doc.add(new StoredField("_doc", ob.serialize()));
                     }
-                    doc.add(new org.apache.lucene.document.StringField(docId.getField().getName(), did, org.apache.lucene.document.Field.Store.NO));
+                    doc.add(new org.apache.lucene.document.StringField(docId.getField().getName(), did, docId.isStored() ? org.apache.lucene.document.Field.Store.YES : org.apache.lucene.document.Field.Store.NO));
                     Term term = new Term(docId.getField().getName(), did);
                     indexWriter.updateDocument(term, doc);
                 } else {

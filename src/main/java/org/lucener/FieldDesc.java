@@ -14,6 +14,7 @@ public class FieldDesc {
     private boolean sort;
     private boolean tokenized;
     private boolean end;
+    private boolean index;
 
     /**
      * construct
@@ -23,7 +24,7 @@ public class FieldDesc {
      * @param inner
      */
     public FieldDesc(Field field, boolean collection, Class inner, boolean stored, boolean sort) {
-        this(field, collection, inner, stored, sort, false, false);
+        this(field, collection, inner, stored, sort, false, false, true);
     }
 
     /**
@@ -36,7 +37,7 @@ public class FieldDesc {
      * @param sort
      * @param tokenized
      */
-    public FieldDesc(Field field, boolean collection, Class inner, boolean stored, boolean sort, boolean tokenized, boolean end) {
+    public FieldDesc(Field field, boolean collection, Class inner, boolean stored, boolean sort, boolean tokenized, boolean end, boolean index) {
         this.field = field;
         this.collection = collection;
         this.inner = inner;
@@ -72,6 +73,10 @@ public class FieldDesc {
 
     public boolean isEnd() {
         return end;
+    }
+
+    public boolean isIndex() {
+        return index;
     }
 
     @Override

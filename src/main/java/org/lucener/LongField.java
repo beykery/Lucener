@@ -12,6 +12,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface LongField {
 
+    boolean index() default true;
+
     boolean stored() default false;
 
     boolean sort() default false;
