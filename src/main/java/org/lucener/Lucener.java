@@ -90,17 +90,29 @@ public class Lucener<T extends DocSerializable<T>> {
     }
 
     /**
-     * representation for class
+     * lucener for class
+     *
+     * @param entityClass
+     * @param <T>
+     * @return
+     * @throws Exception
+     */
+    public synchronized static <T> Lucener forClass(Class<? extends DocSerializable<T>> entityClass) throws Exception {
+        return forClass(entityClass, null);
+    }
+
+    /**
+     * lucener for class
      *
      * @param entityClass
      * @return
      */
-    public synchronized static <T> Lucener forClass(Class<? extends DocSerializable<T>> entityClass) throws Exception {
+    public synchronized static <T> Lucener forClass(Class<? extends DocSerializable<T>> entityClass, String dir) throws Exception {
         if (knownIndex.containsKey(entityClass)) {
             return knownIndex.get(entityClass);
         }
         if (DocSerializable.class.isAssignableFrom(entityClass)) {
-            Lucener entityRepresentation = new Lucener(entityClass);
+            Lucener entityRepresentation = new Lucener(entityClass, dir);
             knownIndex.put(entityClass, entityRepresentation);
             return entityRepresentation;
         } else {
@@ -115,11 +127,11 @@ public class Lucener<T extends DocSerializable<T>> {
      * @param entityClass
      * @throws IOException
      */
-    private <T> Lucener(Class<? extends DocSerializable<T>> entityClass) throws Exception {
+    private <T> Lucener(Class<? extends DocSerializable<T>> entityClass, String dir) throws Exception {
         type = entityClass;
         verifyIndexAnnotation(entityClass);
         Index ian = entityClass.getAnnotation(Index.class);
-        String dir = ian.value();
+        dir = dir == null ? ian.value() : dir;
         if (dir.isEmpty()) {
             dir = ROOT + replaceAll(entityClass.getName(), '.', '/') + "/";
         }
