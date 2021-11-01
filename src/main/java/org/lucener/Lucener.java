@@ -960,6 +960,29 @@ public class Lucener<T extends DocSerializable<T>> {
     }
 
     /**
+     * all result
+     *
+     * @return
+     * @throws Exception
+     */
+    public QueryResult<T> all() throws Exception {
+        return all(null, 128, null);
+    }
+
+    /**
+     * all result
+     *
+     * @param after
+     * @param n
+     * @return
+     * @throws Exception
+     */
+    public QueryResult<T> all(T after, int n, Sort sort) throws Exception {
+        Query q = new MatchAllDocsQuery();
+        return queryAfter(after != null ? new ScoreDoc(after.doc, after.score, after.shardIndex) : null, q, n, sort);
+    }
+
+    /**
      * build query for filed
      *
      * @param field
