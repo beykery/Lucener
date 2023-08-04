@@ -11,7 +11,8 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.MMapDirectory;
+import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.NumericUtils;
 import org.wltea.analyzer.lucene.IKAnalyzer;
 
@@ -32,7 +33,7 @@ public class Lucener<T extends DocSerializable<T>> {
     /**
      * all representation
      */
-    private static final Map<Class<? extends DocSerializable>, Lucener> knownIndex;
+    private static final Map<Class<? extends DocSerializable>, Lucener<? extends DocSerializable>> knownIndex;
     /**
      * the directory
      */
@@ -53,6 +54,10 @@ public class Lucener<T extends DocSerializable<T>> {
      * index file path
      */
     private final String indexPath;
+    /**
+     * persist to disk or not
+     */
+    private final boolean persistence;
     /**
      * store serialized object data
      */
@@ -131,21 +136,22 @@ public class Lucener<T extends DocSerializable<T>> {
         type = entityClass;
         verifyIndexAnnotation(entityClass);
         Index ian = entityClass.getAnnotation(Index.class);
+        persistence = ian.persistence();
         dir = dir == null ? ian.value() : dir;
         if (dir.isEmpty()) {
             dir = ROOT + replaceAll(entityClass.getName(), '.', '/') + "/";
         }
         Path path = Paths.get(dir);
         File file = path.toFile();
-        if (!file.exists()) {
+        indexPath = file.getAbsolutePath();
+        if (persistence && !file.exists()) {
             boolean ret = file.mkdirs();
             if (!ret) {
                 error(entityClass, "can not create file : " + dir);
             }
         }
-        indexPath = file.getAbsolutePath();
         stored = ian.stored();
-        directory = FSDirectory.open(path);
+        directory = persistence ? new MMapDirectory(path) : new RAMDirectory();
         defaultAnalyzer = ian.analyzer() == null ? new IKAnalyzer(ian.ikSmart()) : (ian.analyzer() == IKAnalyzer.class ? new IKAnalyzer(ian.ikSmart()) : ian.analyzer().newInstance());
         fields = new ArrayList<>();
         subFields = new ArrayList<>();
@@ -575,8 +581,9 @@ public class Lucener<T extends DocSerializable<T>> {
      *
      * @param obs
      */
-    public void index(T... obs) throws Exception {
-        if (obs != null && obs.length > 0) {
+    @SafeVarargs
+    public final void index(T... obs) throws Exception {
+        if (obs != null) {
             for (T ob : obs) {
                 if (ob != null && ob.getClass() == type) {
                     // doc id

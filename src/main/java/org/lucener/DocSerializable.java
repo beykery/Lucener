@@ -1,5 +1,7 @@
 package org.lucener;
 
+import org.lucener.util.Mappers;
+
 /**
  * deserialize and serialize for doc
  */
@@ -25,12 +27,14 @@ public abstract class DocSerializable<T> {
      *
      * @return
      */
-    abstract protected String serialize();
+    protected String serialize() {
+        return Mappers.json(this);
+    }
 
     /**
      * deserialize
      *
      * @return
      */
-    abstract protected T deserialize(String s);
+    protected abstract T deserialize(String s);
 }

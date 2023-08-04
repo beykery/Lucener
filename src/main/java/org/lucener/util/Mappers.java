@@ -1,4 +1,4 @@
-package org.lucener.test.util;
+package org.lucener.util;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;

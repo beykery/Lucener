@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.lucener.*;
-import org.lucener.test.util.Mappers;
+import org.lucener.util.Mappers;
 
 import java.util.List;
 import java.util.Set;
@@ -48,11 +48,6 @@ public class TestEntity extends DocSerializable<TestEntity> {
 
     private List<TestVo> vos;
     private TestVo testVo;
-
-    @Override
-    public String serialize() {
-        return Mappers.json(this);
-    }
 
     @Override
     public TestEntity deserialize(String s) {

@@ -23,7 +23,14 @@ public @interface Index {
     String value() default "";
 
     /**
-     * store serialized data ?
+     * persist to disk or not
+     *
+     * @return
+     */
+    boolean persistence() default true;
+
+    /**
+     * store serialized data or not
      *
      * @return
      */
