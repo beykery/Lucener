@@ -1,10 +1,8 @@
 package org.lucener.test;
 
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.search.FieldComparator;
-import org.apache.lucene.search.FieldComparatorSource;
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.lucener.Lucener;
@@ -77,10 +75,17 @@ public class LuceneIndexTest {
 
     @Test
     public void queryByContent() throws Exception {
-        String content = "computer price";
+        String content = "computer";
         String price = "price";
         String desc = "desc";
         QueryResult<TestEntity> ret = lucener.query("content", content, 1, null);
+        System.out.println(ret);
+    }
+
+    @Test
+    public void queryByV() throws Exception {
+        int v = 4;
+        QueryResult<TestEntity> ret = lucener.query("vos.listInt", v, 1, null);
         System.out.println(ret);
     }
 
@@ -104,12 +109,12 @@ public class LuceneIndexTest {
         System.out.println(tes.getResult().size());
 
         // pageable test
-        tes = lucener.queryAfter(tes.getResult().get(tes.getResult().size() - 2), "tags", "artwork", 100, null);
+        tes = lucener.queryAfter(tes.getResult().get(tes.getResult().size() - 1), "tags", "artwork", 100, null);
         System.out.println(tes.getResult());
         System.out.println(tes.getTotal());
         System.out.println(tes.getResult().size());
 
-        tes = lucener.queryAfter(tes.getResult().get(tes.getResult().size() - 2), "tags", "artwork", 100, null);
+        tes = lucener.queryAfter(tes.getResult().get(tes.getResult().size() - 1), "tags", "artwork", 100, null);
         System.out.println(tes.getResult());
         System.out.println(tes.getTotal());
         System.out.println(tes.getResult().size());
@@ -120,15 +125,35 @@ public class LuceneIndexTest {
     public void queryByTextToken() throws Exception {
         Sort sort = new Sort(
                 //SortField.FIELD_SCORE,
-                //new SortedNumericSortField("x", SortField.Type.INT, true)
+                new SortedNumericSortField("x", SortField.Type.INT, true)
 
-                new SortField("", new FieldComparatorSource() {
-
-                    @Override
-                    public FieldComparator<?> newComparator(String fieldname, int numHits, int sortPos, boolean reversed) {
-                        return null;
-                    }
-                })
+//                new SortField("", new FieldComparatorSource() {
+//
+//                    @Override
+//                    public FieldComparator<?> newComparator(String fieldname, int numHits, boolean enableSkipping, boolean reversed) {
+//                        return new FieldComparator<Object>() {
+//                            @Override
+//                            public int compare(int slot1, int slot2) {
+//                                return 0;
+//                            }
+//
+//                            @Override
+//                            public void setTopValue(Object value) {
+//
+//                            }
+//
+//                            @Override
+//                            public Object value(int slot) {
+//                                return null;
+//                            }
+//
+//                            @Override
+//                            public LeafFieldComparator getLeafComparator(LeafReaderContext context) throws IOException {
+//                                return null;
+//                            }
+//                        };
+//                    }
+//                })
         );
         QueryResult<TestEntity> tes = lucener.query("content", "不错", 10, sort);
         System.out.println(tes.getTotal());

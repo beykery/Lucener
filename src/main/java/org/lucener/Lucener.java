@@ -10,9 +10,9 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
+import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.MMapDirectory;
-import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.NumericUtils;
 import org.wltea.analyzer.lucene.IKAnalyzer;
 
@@ -151,8 +151,8 @@ public class Lucener<T extends DocSerializable<T>> {
             }
         }
         stored = ian.stored();
-        directory = persistence ? new MMapDirectory(path) : new RAMDirectory();
-        defaultAnalyzer = ian.analyzer() == null ? new IKAnalyzer(ian.ikSmart()) : (ian.analyzer() == IKAnalyzer.class ? new IKAnalyzer(ian.ikSmart()) : ian.analyzer().newInstance());
+        directory = persistence ? new MMapDirectory(path) : new ByteBuffersDirectory();
+        defaultAnalyzer = ian.analyzer() == null ? new IKAnalyzer(ian.ikSmart()) : (ian.analyzer() == IKAnalyzer.class ? new IKAnalyzer(ian.ikSmart()) : ian.analyzer().getDeclaredConstructor().newInstance());
         fields = new ArrayList<>();
         subFields = new ArrayList<>();
         List<Field> allFiled = new ArrayList<>();
@@ -878,7 +878,7 @@ public class Lucener<T extends DocSerializable<T>> {
      * @param v
      */
     public long deleteDocuments(String field, Object v) throws Exception {
-        Query query = buildQuery(field, v);
+        Query query = buildExactQuery(field, v);
         if (query != null) {
             return deleteDocuments(query);
         } else {
@@ -956,7 +956,7 @@ public class Lucener<T extends DocSerializable<T>> {
      */
     public QueryResult<T> queryAfter(ScoreDoc after, String field, Object v, int n, Sort sort) throws Exception {
         QueryResult<T> queryResult = null;
-        Query query = buildQuery(field, v);
+        Query query = buildExactQuery(field, v);
         if (query != null) {
             if (sort != null && after != null) {
                 after = (after instanceof FieldDoc) ? after : new FieldDoc(after.doc, after.score);
@@ -990,17 +990,17 @@ public class Lucener<T extends DocSerializable<T>> {
     }
 
     /**
-     * build query for filed
+     * build query for filed exact query
      *
      * @param field
      * @param v
      * @return
      */
-    public Query buildQuery(String field, Object v) {
+    public Query buildExactQuery(String field, Object v) {
         List<FieldDesc> list = docId.getField().getName().equals(field) ? Collections.singletonList(docId) : allFields.get(field);
         if (!list.isEmpty()) {
             FieldDesc fd = list.get(list.size() - 1);
-            Class type = fd.getInner();
+            Class<?> type = fd.getInner();
             if (type == int.class || type == Integer.class) {
                 return IntPoint.newExactQuery(field, (Integer) v);
             } else if (type == long.class || type == Long.class) {
@@ -1086,10 +1086,10 @@ public class Lucener<T extends DocSerializable<T>> {
             total = topDocs.totalHits.value;
             ScoreDoc[] hits = topDocs.scoreDocs;
             if (hits != null && hits.length > 0) {
-                T dsi = (T) this.type.newInstance();  // ? not very ok . . .
+                T dsi = (T) this.type.getDeclaredConstructor().newInstance();  // ? not very ok . . .
                 for (ScoreDoc sc : hits) {
                     int did = sc.doc;
-                    Document doc = indexSearcher.doc(did);
+                    Document doc = indexSearcher.getIndexReader().storedFields().document(did);
                     String docString = doc.get("_doc");
                     if (docString != null) {
                         T d = dsi.deserialize(docString);
@@ -1100,8 +1100,6 @@ public class Lucener<T extends DocSerializable<T>> {
                     }
                 }
             }
-        } catch (Exception ex) {
-            throw ex;
         } finally {
             if (indexSearcher != null) {
                 searcherManager.release(indexSearcher);
