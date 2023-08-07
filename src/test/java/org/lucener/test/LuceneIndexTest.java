@@ -1,8 +1,9 @@
 package org.lucener.test;
 
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.SortedNumericSortField;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.lucener.Lucener;
@@ -10,7 +11,7 @@ import org.lucener.QueryResult;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashSet;
 
 public class LuceneIndexTest {
 
@@ -45,7 +46,7 @@ public class LuceneIndexTest {
                     .content("computer price is so high , and i want to go home . what are you thinking about ? what's wrong with you ? 天气也不错。")
                     .testVo(vo)                   // testVo.listInt = [1,2,3,4,5,6]
                     .vos(Arrays.asList(tvo, vo))  // vos.listInt = [1,2,3,4,5,6,7,8,9]
-                    .tags(Collections.singleton("artwork"))
+                    .tags(new HashSet<>(Arrays.asList("artwork", "test", "kkkk", "xxx", "yyy" + i)))
                     .build();
             lucener.index(en);
         }
