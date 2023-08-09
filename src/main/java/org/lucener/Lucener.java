@@ -524,7 +524,7 @@ public class Lucener<T extends DocSerializable<T>> {
      * @param c
      * @return
      */
-    private static boolean isCollection(Class c) {
+    private static boolean isCollection(Class<?> c) {
         return Collection.class.isAssignableFrom(c);
     }
 
@@ -814,7 +814,7 @@ public class Lucener<T extends DocSerializable<T>> {
         if (v == null) {
             return true;
         } else if (isCollection(v.getClass())) {
-            Collection c = (Collection) v;
+            Collection<?> c = (Collection<?>) v;
             return c.isEmpty();
         }
         return false;
@@ -824,7 +824,6 @@ public class Lucener<T extends DocSerializable<T>> {
      * commit
      *
      * @return
-     * @throws IOException
      */
     public long commit() throws IOException {
         return indexWriter.commit();
@@ -832,8 +831,6 @@ public class Lucener<T extends DocSerializable<T>> {
 
     /**
      * close writer and directory
-     *
-     * @throws IOException
      */
     public void close() throws IOException {
         indexWriter.close();
@@ -854,7 +851,7 @@ public class Lucener<T extends DocSerializable<T>> {
         TopDocs topDocs = indexSearcher.searchAfter(null, builder.build(), 1);
         ScoreDoc[] hits = topDocs.scoreDocs;
         if (hits != null && hits.length > 0) {
-            T dsi = (T) this.type.newInstance();  // ? not very ok . . .
+            T dsi = (T) this.type.getDeclaredConstructor().newInstance();  // ? not very ok . . .
             for (ScoreDoc sc : hits) {
                 int did = sc.doc;
                 Document doc = indexSearcher.doc(did);
@@ -1022,8 +1019,7 @@ public class Lucener<T extends DocSerializable<T>> {
      * @return
      */
     public static BooleanQuery.Builder booleanQuery() {
-        BooleanQuery.Builder builder = new BooleanQuery.Builder();
-        return builder;
+        return new BooleanQuery.Builder();
     }
 
     /**
