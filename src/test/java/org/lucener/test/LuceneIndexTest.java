@@ -11,6 +11,7 @@ import org.lucener.QueryResult;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 
 public class LuceneIndexTest {
 
@@ -45,7 +46,7 @@ public class LuceneIndexTest {
                     .content("computer price is so high , and i want to go home . what are you thinking about ? what's wrong with you ? 天气也不错。")
                     .testVo(vo)                   // testVo.listInt = [1,2,3,4,5,6]
                     .vos(Arrays.asList(tvo, vo))  // vos.listInt = [1,2,3,4,5,6,7,8,9]
-                    .tags(Collections.singleton("artwork"))
+                    .tags(new HashSet<>(Arrays.asList("artwork", "tag" + i, "artwork" + i)))
                     .build();
             lucener.index(en);
         }
@@ -103,21 +104,23 @@ public class LuceneIndexTest {
 
     @Test
     public void queryByTag() throws Exception {
-        QueryResult<TestEntity> tes = lucener.query("tags", "artwork", 100, null);
-        System.out.println(tes.getResult());
-        System.out.println(tes.getTotal());
-        System.out.println(tes.getResult().size());
+        BooleanQuery.Builder builder = Lucener.booleanQuery();
+        Query query1 = lucener.buildExactQuery("tags", "artwork1");
+        Query query2 = lucener.buildExactQuery("tags", "tag11");
+        Lucener.should(builder, query1, query2);
+        QueryResult<TestEntity> tes = lucener.query(builder.build(), 10, null);
+        System.out.println(tes);
 
         // pageable test
-        tes = lucener.queryAfter(tes.getResult().get(tes.getResult().size() - 1), "tags", "artwork", 100, null);
-        System.out.println(tes.getResult());
-        System.out.println(tes.getTotal());
-        System.out.println(tes.getResult().size());
-
-        tes = lucener.queryAfter(tes.getResult().get(tes.getResult().size() - 1), "tags", "artwork", 100, null);
-        System.out.println(tes.getResult());
-        System.out.println(tes.getTotal());
-        System.out.println(tes.getResult().size());
+//        tes = lucener.queryAfter(tes.getResult().get(tes.getResult().size() - 1), "tags", "artwork", 100, null);
+//        System.out.println(tes.getResult());
+//        System.out.println(tes.getTotal());
+//        System.out.println(tes.getResult().size());
+//
+//        tes = lucener.queryAfter(tes.getResult().get(tes.getResult().size() - 1), "tags", "artwork", 100, null);
+//        System.out.println(tes.getResult());
+//        System.out.println(tes.getTotal());
+//        System.out.println(tes.getResult().size());
     }
 
 

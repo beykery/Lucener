@@ -1032,8 +1032,9 @@ public class Lucener<T extends DocSerializable<T>> {
      * @param queries
      * @return
      */
-    public static void should(BooleanQuery.Builder builder, Query... queries) {
+    public static BooleanQuery.Builder should(BooleanQuery.Builder builder, Query... queries) {
         Arrays.stream(queries).forEach(q -> builder.add(q, BooleanClause.Occur.SHOULD));
+        return builder;
     }
 
     /**
@@ -1042,8 +1043,9 @@ public class Lucener<T extends DocSerializable<T>> {
      * @param queries
      * @return
      */
-    public static void must(BooleanQuery.Builder builder, Query... queries) {
+    public static BooleanQuery.Builder must(BooleanQuery.Builder builder, Query... queries) {
         Arrays.stream(queries).forEach(q -> builder.add(q, BooleanClause.Occur.MUST));
+        return builder;
     }
 
     /**
@@ -1052,8 +1054,9 @@ public class Lucener<T extends DocSerializable<T>> {
      * @param builder
      * @param queries
      */
-    public static void mustNot(BooleanQuery.Builder builder, Query... queries) {
+    public static BooleanQuery.Builder mustNot(BooleanQuery.Builder builder, Query... queries) {
         Arrays.stream(queries).forEach(q -> builder.add(q, BooleanClause.Occur.MUST_NOT));
+        return builder;
     }
 
     /**
@@ -1062,8 +1065,9 @@ public class Lucener<T extends DocSerializable<T>> {
      * @param builder
      * @param queries
      */
-    public static void filter(BooleanQuery.Builder builder, Query... queries) {
+    public static BooleanQuery.Builder filter(BooleanQuery.Builder builder, Query... queries) {
         Arrays.stream(queries).forEach(q -> builder.add(q, BooleanClause.Occur.FILTER));
+        return builder;
     }
 
     /**
