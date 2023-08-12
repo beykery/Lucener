@@ -603,62 +603,72 @@ public class Lucener<T extends DocSerializable<T>> {
                                 if (inner == int.class || inner == Integer.class) {
                                     Collection<Integer> c = (Collection<Integer>) v;
                                     c.forEach(i -> {
-                                        if (f.isIndex()) {
-                                            doc.add(new IntPoint(name, i));
-                                        }
-                                        if (f.isStored()) {
-                                            doc.add(new StoredField(name, i));
-                                        }
-                                        if (f.isSort()) {
-                                            doc.add(new SortedNumericDocValuesField(name, i));
+                                        if (i != null) {
+                                            if (f.isIndex()) {
+                                                doc.add(new IntPoint(name, i));
+                                            }
+                                            if (f.isStored()) {
+                                                doc.add(new StoredField(name, i));
+                                            }
+                                            if (f.isSort()) {
+                                                doc.add(new SortedNumericDocValuesField(name, i));
+                                            }
                                         }
                                     });
                                 } else if (inner == long.class || inner == Long.class) {
                                     Collection<Long> c = (Collection<Long>) v;
                                     c.forEach(i -> {
-                                        if (f.isIndex()) {
-                                            doc.add(new LongPoint(name, i));
-                                        }
-                                        if (f.isStored()) {
-                                            doc.add(new StoredField(name, i));
-                                        }
-                                        if (f.isSort()) {
-                                            doc.add(new SortedNumericDocValuesField(name, i));
+                                        if (i != null) {
+                                            if (f.isIndex()) {
+                                                doc.add(new LongPoint(name, i));
+                                            }
+                                            if (f.isStored()) {
+                                                doc.add(new StoredField(name, i));
+                                            }
+                                            if (f.isSort()) {
+                                                doc.add(new SortedNumericDocValuesField(name, i));
+                                            }
                                         }
                                     });
                                 } else if (inner == float.class || inner == Float.class) {
                                     Collection<Float> c = (Collection<Float>) v;
                                     c.forEach(i -> {
-                                        if (f.isIndex()) {
-                                            doc.add(new FloatPoint(name, i));
-                                        }
-                                        if (f.isStored()) {
-                                            doc.add(new StoredField(name, i));
-                                        }
-                                        if (f.isSort()) {
-                                            doc.add(new SortedNumericDocValuesField(name, NumericUtils.floatToSortableInt(i)));
+                                        if (i != null) {
+                                            if (f.isIndex()) {
+                                                doc.add(new FloatPoint(name, i));
+                                            }
+                                            if (f.isStored()) {
+                                                doc.add(new StoredField(name, i));
+                                            }
+                                            if (f.isSort()) {
+                                                doc.add(new SortedNumericDocValuesField(name, NumericUtils.floatToSortableInt(i)));
+                                            }
                                         }
                                     });
                                 } else if (inner == double.class || inner == Double.class) {
                                     Collection<Double> c = (Collection<Double>) v;
                                     c.forEach(i -> {
-                                        if (f.isIndex()) {
-                                            doc.add(new DoublePoint(name, i));
-                                        }
-                                        if (f.isStored()) {
-                                            doc.add(new StoredField(name, i));
-                                        }
-                                        if (f.isSort()) {
-                                            doc.add(new SortedNumericDocValuesField(name, NumericUtils.floatToSortableInt(i.floatValue())));
+                                        if (i != null) {
+                                            if (f.isIndex()) {
+                                                doc.add(new DoublePoint(name, i));
+                                            }
+                                            if (f.isStored()) {
+                                                doc.add(new StoredField(name, i));
+                                            }
+                                            if (f.isSort()) {
+                                                doc.add(new SortedNumericDocValuesField(name, NumericUtils.floatToSortableInt(i.floatValue())));
+                                            }
                                         }
                                     });
                                 } else if (inner == String.class) {
                                     Collection<String> c = (Collection<String>) v;
                                     c.forEach(i -> {
-                                        if (f.isTokenized()) {
-                                            doc.add(new org.apache.lucene.document.TextField(name, i, f.isStored() ? org.apache.lucene.document.Field.Store.YES : org.apache.lucene.document.Field.Store.NO));
-                                        } else {
-                                            doc.add(new org.apache.lucene.document.StringField(name, i, f.isStored() ? org.apache.lucene.document.Field.Store.YES : org.apache.lucene.document.Field.Store.NO));
+                                        if (i != null && !i.trim().isEmpty()) {
+                                            if (f.isTokenized()) {
+                                                doc.add(new org.apache.lucene.document.TextField(name, i, f.isStored() ? org.apache.lucene.document.Field.Store.YES : org.apache.lucene.document.Field.Store.NO));
+                                            } else {
+                                                doc.add(new org.apache.lucene.document.StringField(name, i, f.isStored() ? org.apache.lucene.document.Field.Store.YES : org.apache.lucene.document.Field.Store.NO));
+                                            }
                                         }
                                     });
                                 }
