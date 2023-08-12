@@ -263,7 +263,7 @@ public class Lucener<T extends DocSerializable<T>> {
         PerFieldAnalyzerWrapper wrapper = new PerFieldAnalyzerWrapper(defaultAnalyzer, fieldAnalyzers);
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(wrapper);
         indexWriter = new IndexWriter(directory, indexWriterConfig);
-        searcherManager = new SearcherManager(indexWriter, false, false, new SearcherFactory());
+        searcherManager = new SearcherManager(indexWriter, true, true, new SearcherFactory());
     }
 
     /**
@@ -857,25 +857,29 @@ public class Lucener<T extends DocSerializable<T>> {
      */
     public T get(String id) throws Exception {
         IndexSearcher indexSearcher = searcherManager.acquire();
-        BooleanQuery.Builder builder = new BooleanQuery.Builder();
-        FieldDesc fd = docId;
-        builder.add(new TermQuery(new Term(fd.getField().getName(), id)), BooleanClause.Occur.FILTER);
-        TopDocs topDocs = indexSearcher.searchAfter(null, builder.build(), 1);
-        ScoreDoc[] hits = topDocs.scoreDocs;
-        if (hits != null && hits.length > 0) {
-            T dsi = (T) this.type.getDeclaredConstructor().newInstance();  // ? not very ok . . .
-            for (ScoreDoc sc : hits) {
-                int did = sc.doc;
-                Document doc = indexSearcher.getIndexReader().storedFields().document(did);
-                String docString = doc.get("_doc");
-                if (docString != null) {
-                    T d = dsi.deserialize(docString);
-                    d.doc = did;
-                    d.score = sc.score;
-                    d.shardIndex = sc.shardIndex;
-                    return d;
+        try {
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
+            FieldDesc fd = docId;
+            builder.add(new TermQuery(new Term(fd.getField().getName(), id)), BooleanClause.Occur.FILTER);
+            TopDocs topDocs = indexSearcher.searchAfter(null, builder.build(), 1);
+            ScoreDoc[] hits = topDocs.scoreDocs;
+            if (hits != null && hits.length > 0) {
+                T dsi = (T) this.type.getDeclaredConstructor().newInstance();  // ? not very ok . . .
+                for (ScoreDoc sc : hits) {
+                    int did = sc.doc;
+                    Document doc = indexSearcher.getIndexReader().storedFields().document(did);
+                    String docString = doc.get("_doc");
+                    if (docString != null) {
+                        T d = dsi.deserialize(docString);
+                        d.doc = did;
+                        d.score = sc.score;
+                        d.shardIndex = sc.shardIndex;
+                        return d;
+                    }
                 }
             }
+        } finally {
+            searcherManager.release(indexSearcher);
         }
         return null;
     }
@@ -888,12 +892,16 @@ public class Lucener<T extends DocSerializable<T>> {
      */
     public boolean exist(String id) throws IOException {
         IndexSearcher indexSearcher = searcherManager.acquire();
-        BooleanQuery.Builder builder = new BooleanQuery.Builder();
-        FieldDesc fd = docId;
-        builder.add(new TermQuery(new Term(fd.getField().getName(), id)), BooleanClause.Occur.FILTER);
-        TopDocs topDocs = indexSearcher.searchAfter(null, builder.build(), 1);
-        ScoreDoc[] hits = topDocs.scoreDocs;
-        return hits != null && hits.length > 0;
+        try {
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
+            FieldDesc fd = docId;
+            builder.add(new TermQuery(new Term(fd.getField().getName(), id)), BooleanClause.Occur.FILTER);
+            TopDocs topDocs = indexSearcher.searchAfter(null, builder.build(), 1);
+            ScoreDoc[] hits = topDocs.scoreDocs;
+            return hits != null && hits.length > 0;
+        } finally {
+            searcherManager.release(indexSearcher);
+        }
     }
 
     /**
