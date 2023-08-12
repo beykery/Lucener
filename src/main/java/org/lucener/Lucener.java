@@ -596,10 +596,10 @@ public class Lucener<T extends DocSerializable<T>> {
                         final FieldDesc f = fs.get(fs.size() - 1);  // the end
                         final Object v = value(fs, ob);
                         if (v != null) {
-                            Class inner = f.getInner();
+                            Class<?> inner = f.getInner();
                             String name = name(fs);
                             // collection
-                            if (f.isCollection()) {
+                            if (Collection.class.isAssignableFrom(v.getClass())) {
                                 if (inner == int.class || inner == Integer.class) {
                                     Collection<Integer> c = (Collection<Integer>) v;
                                     c.forEach(i -> {
@@ -792,8 +792,8 @@ public class Lucener<T extends DocSerializable<T>> {
             else {
                 // collection
                 if (fd.isCollection()) {
-                    Collection ret = new HashSet();
-                    Collection c = (Collection) value;
+                    Collection ret = new HashSet<>();
+                    Collection<?> c = (Collection<?>) value;
                     for (Object item : c) {
                         List<FieldDesc> fds = fs.subList(1, fs.size());
                         Object temp = value(fds, item);
