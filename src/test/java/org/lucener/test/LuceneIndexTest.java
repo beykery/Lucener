@@ -67,6 +67,12 @@ public class LuceneIndexTest {
     }
 
     @Test
+    public void exist() throws IOException {
+        boolean exist = lucener.exist("1000000");
+        System.out.println(exist);
+    }
+
+    @Test
     public void delete() throws Exception {
         String id = "9999";
         lucener.deleteDocuments("did", id);

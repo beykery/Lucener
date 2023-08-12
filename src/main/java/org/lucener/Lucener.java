@@ -847,14 +847,14 @@ public class Lucener<T extends DocSerializable<T>> {
         IndexSearcher indexSearcher = searcherManager.acquire();
         BooleanQuery.Builder builder = new BooleanQuery.Builder();
         FieldDesc fd = docId;
-        builder.add(new TermQuery(new Term(fd.getField().getName(), id)), BooleanClause.Occur.MUST);
+        builder.add(new TermQuery(new Term(fd.getField().getName(), id)), BooleanClause.Occur.FILTER);
         TopDocs topDocs = indexSearcher.searchAfter(null, builder.build(), 1);
         ScoreDoc[] hits = topDocs.scoreDocs;
         if (hits != null && hits.length > 0) {
             T dsi = (T) this.type.getDeclaredConstructor().newInstance();  // ? not very ok . . .
             for (ScoreDoc sc : hits) {
                 int did = sc.doc;
-                Document doc = indexSearcher.doc(did);
+                Document doc = indexSearcher.getIndexReader().storedFields().document(did);
                 String docString = doc.get("_doc");
                 if (docString != null) {
                     T d = dsi.deserialize(docString);
@@ -866,6 +866,22 @@ public class Lucener<T extends DocSerializable<T>> {
             }
         }
         return null;
+    }
+
+    /**
+     * entity exist ?
+     *
+     * @param id doc id
+     * @return
+     */
+    public boolean exist(String id) throws IOException {
+        IndexSearcher indexSearcher = searcherManager.acquire();
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        FieldDesc fd = docId;
+        builder.add(new TermQuery(new Term(fd.getField().getName(), id)), BooleanClause.Occur.FILTER);
+        TopDocs topDocs = indexSearcher.searchAfter(null, builder.build(), 1);
+        ScoreDoc[] hits = topDocs.scoreDocs;
+        return hits != null && hits.length > 0;
     }
 
     /**
