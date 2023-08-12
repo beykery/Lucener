@@ -787,11 +787,13 @@ public class Lucener<T extends DocSerializable<T>> {
                     for (Object item : c) {
                         List<FieldDesc> fds = fs.subList(1, fs.size());
                         Object temp = value(fds, item);
-                        if (isCollection(temp.getClass())) {
-                            Collection tc = (Collection) temp;
-                            ret.addAll(tc);
-                        } else {
-                            ret.add(temp);
+                        if (temp != null) {
+                            if (isCollection(temp.getClass())) {
+                                Collection tc = (Collection) temp;
+                                ret.addAll(tc);
+                            } else {
+                                ret.add(temp);
+                            }
                         }
                     }
                     return ret;
