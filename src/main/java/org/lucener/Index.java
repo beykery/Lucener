@@ -23,6 +23,14 @@ public @interface Index {
     String value() default "";
 
     /**
+     * prefix path for index directory
+     * for example : a/b/
+     *
+     * @return
+     */
+    String prefix() default "";
+
+    /**
      * persist to disk or not
      *
      * @return

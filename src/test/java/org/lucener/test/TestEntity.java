@@ -14,7 +14,7 @@ import java.util.Set;
 /**
  * for test index
  */
-@Index(ikSmart = true)
+@Index(ikSmart = true, prefix = "a/b/")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

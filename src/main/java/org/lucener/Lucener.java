@@ -55,10 +55,6 @@ public class Lucener<T extends DocSerializable<T>> {
      */
     private final String indexPath;
     /**
-     * persist to disk or not
-     */
-    private final boolean persistence;
-    /**
      * store serialized object data
      */
     private final boolean stored;
@@ -66,14 +62,6 @@ public class Lucener<T extends DocSerializable<T>> {
      * id field
      */
     private FieldDesc docId;
-    /**
-     * all fields index
-     */
-    private final List<FieldDesc> fields;
-    /**
-     * sub field as a.b.c
-     */
-    private final List<List<FieldDesc>> subFields;
     /**
      * all fields that contain fields and sub-fields
      */
@@ -87,8 +75,8 @@ public class Lucener<T extends DocSerializable<T>> {
      */
     private static final String ROOT = "./.indices/";
 
-    /**
-     * init
+    /*
+      init
      */
     static {
         knownIndex = new HashMap<>();
@@ -112,7 +100,7 @@ public class Lucener<T extends DocSerializable<T>> {
      * @param entityClass
      * @return
      */
-    public synchronized static <T> Lucener forClass(Class<? extends DocSerializable<T>> entityClass, String dir) throws Exception {
+    public synchronized static <V> Lucener forClass(Class<? extends DocSerializable<V>> entityClass, String dir) throws Exception {
         if (knownIndex.containsKey(entityClass)) {
             return knownIndex.get(entityClass);
         }
@@ -132,14 +120,17 @@ public class Lucener<T extends DocSerializable<T>> {
      * @param entityClass
      * @throws IOException
      */
-    private <T> Lucener(Class<? extends DocSerializable<T>> entityClass, String dir) throws Exception {
+    private <U> Lucener(Class<? extends DocSerializable<U>> entityClass, String dir) throws Exception {
         type = entityClass;
         verifyIndexAnnotation(entityClass);
         Index ian = entityClass.getAnnotation(Index.class);
-        persistence = ian.persistence();
+        /**
+         * persist to disk or not
+         */
+        boolean persistence = ian.persistence();
         dir = dir == null ? ian.value() : dir;
         if (dir.isEmpty()) {
-            dir = ROOT + replaceAll(entityClass.getName(), '.', '/') + "/";
+            dir = ROOT + ian.prefix() + replaceAll(entityClass.getName(), '.', '/') + "/";
         }
         Path path = Paths.get(dir);
         File file = path.toFile();
@@ -153,8 +144,14 @@ public class Lucener<T extends DocSerializable<T>> {
         stored = ian.stored();
         directory = persistence ? new MMapDirectory(path) : new ByteBuffersDirectory();
         defaultAnalyzer = ian.analyzer() == null ? new IKAnalyzer(ian.ikSmart()) : (ian.analyzer() == IKAnalyzer.class ? new IKAnalyzer(ian.ikSmart()) : ian.analyzer().getDeclaredConstructor().newInstance());
-        fields = new ArrayList<>();
-        subFields = new ArrayList<>();
+        /**
+         * all fields index
+         */
+        List<FieldDesc> fields = new ArrayList<>();
+        /**
+         * sub-field as a.b.c
+         */
+        List<List<FieldDesc>> subFields1 = new ArrayList<>();
         List<Field> allFiled = new ArrayList<>();
         allField(entityClass, allFiled);
         // annotated field
@@ -228,7 +225,7 @@ public class Lucener<T extends DocSerializable<T>> {
             else if (!isPrimitive(f)) {
                 List<List<FieldDesc>> subFields = new ArrayList<>();
                 subFields(new ArrayList<>(), f, subFields);
-                this.subFields.addAll(subFields);
+                subFields1.addAll(subFields);
             }
         }
         // id exist ?
@@ -247,7 +244,7 @@ public class Lucener<T extends DocSerializable<T>> {
                 fieldAnalyzers.put(name, fieldAnalyzer);
             }
         }
-        for (List<FieldDesc> item : subFields) {
+        for (List<FieldDesc> item : subFields1) {
             if (!item.isEmpty()) {
                 String name = item.stream().map(f -> f.getField().getName()).collect(Collectors.joining("."));
                 allFields.put(name, item);
@@ -553,7 +550,7 @@ public class Lucener<T extends DocSerializable<T>> {
      *
      * @param claz
      */
-    public static void allField(Class<? extends Object> claz, List<Field> all) {
+    public static void allField(Class<?> claz, List<Field> all) {
         Field[] fs = claz.getDeclaredFields();
         all.addAll(Arrays.asList(fs));
         // the super fields
@@ -564,13 +561,13 @@ public class Lucener<T extends DocSerializable<T>> {
     }
 
 
-    public static void verifyIndexAnnotation(Class<? extends Object> entityClass) {
+    public static void verifyIndexAnnotation(Class<?> entityClass) {
         if (entityClass.getAnnotation(Index.class) == null) {
             error(entityClass, "missing @Index annotation");
         }
     }
 
-    public static void error(Class<? extends Object> entityClass, String msg) {
+    public static void error(Class<?> entityClass, String msg) {
         throw new RuntimeException(entityClass.getCanonicalName() + ": " + msg);
     }
 
@@ -792,7 +789,7 @@ public class Lucener<T extends DocSerializable<T>> {
             else {
                 // collection
                 if (fd.isCollection()) {
-                    Collection ret = new HashSet<>();
+                    Collection<Object> ret = new HashSet<>();
                     Collection<?> c = (Collection<?>) value;
                     for (Object item : c) {
                         List<FieldDesc> fds = fs.subList(1, fs.size());
@@ -1172,21 +1169,14 @@ public class Lucener<T extends DocSerializable<T>> {
      */
     public static List<String> tokens(Analyzer analyzer, String text) throws IOException {
         List<String> tokens = new ArrayList<>();
-        TokenStream stream = null;
-        try {
-            stream = analyzer.tokenStream("", text);
+        try (TokenStream stream = analyzer.tokenStream("", text)) {
             CharTermAttribute cta = stream.addAttribute(CharTermAttribute.class);
             stream.reset();
             while ((stream.incrementToken())) {
                 tokens.add(cta.toString());
             }
-            stream.close();
         } catch (Exception ex) {
             throw new IOException(ex);
-        } finally {
-            if (stream != null) {
-                stream.close();
-            }
         }
         return tokens;
     }
