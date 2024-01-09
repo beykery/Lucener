@@ -86,11 +86,11 @@ public class Lucener<T extends DocSerializable<T>> {
      * lucener for class
      *
      * @param entityClass
-     * @param <T>
+     * @param <U>
      * @return
      * @throws Exception
      */
-    public synchronized static <T> Lucener forClass(Class<? extends DocSerializable<T>> entityClass) throws Exception {
+    public synchronized static <U> Lucener forClass(Class<? extends DocSerializable<U>> entityClass) throws Exception {
         return forClass(entityClass, null);
     }
 
@@ -105,7 +105,7 @@ public class Lucener<T extends DocSerializable<T>> {
             return knownIndex.get(entityClass);
         }
         if (DocSerializable.class.isAssignableFrom(entityClass)) {
-            Lucener entityRepresentation = new Lucener(entityClass, dir);
+            Lucener entityRepresentation = new Lucener<>(entityClass, dir);
             knownIndex.put(entityClass, entityRepresentation);
             return entityRepresentation;
         } else {

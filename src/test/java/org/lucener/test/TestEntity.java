@@ -51,7 +51,7 @@ public class TestEntity extends DocSerializable<TestEntity> {
 
     @Override
     public TestEntity deserialize(String s) {
-        return Mappers.parseJson(s, new TypeReference<TestEntity>() {
+        return Mappers.parseJson(s, new TypeReference<>() {
         });
     }
 }
