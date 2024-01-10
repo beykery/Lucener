@@ -8,6 +8,7 @@ import org.lucener.Lucener;
 import org.lucener.QueryResult;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -41,6 +42,7 @@ public class LuceneIndexTest {
                     .ff(3f)
                     .z(4L)
                     .zz(4L)
+                    .big(BigInteger.valueOf(i))
                     .desc("desc")
                     .content("computer price is so high , and i want to go home . what are you thinking about ? what's wrong with you ? 天气也不错。")
                     .testVo(vo)                   // testVo.listInt = [1,2,3,4,5,6]
@@ -92,6 +94,13 @@ public class LuceneIndexTest {
     public void queryByV() throws Exception {
         int v = 4;
         QueryResult<TestEntity> ret = lucener.query("vos.listInt", v, 1, null);
+        System.out.println(ret);
+    }
+
+    @Test
+    public void queryByBig() throws Exception {
+        int v = 4;
+        QueryResult<TestEntity> ret = lucener.query("big", BigInteger.valueOf(v), 1, null);
         System.out.println(ret);
     }
 

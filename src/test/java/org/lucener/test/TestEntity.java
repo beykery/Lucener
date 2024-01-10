@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.lucener.*;
 import org.lucener.util.Mappers;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
 
@@ -42,6 +43,9 @@ public class TestEntity extends DocSerializable<TestEntity> {
     private String desc;
     @TextField(stored = true)
     private String content;
+
+    @BigIntegerField(stored = true)
+    private BigInteger big;
 
     @StringField(stored = false)
     private Set<String> tags;

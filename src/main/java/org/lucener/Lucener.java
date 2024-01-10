@@ -9,6 +9,7 @@ import org.apache.lucene.index.CheckIndex;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.sandbox.document.BigIntegerPoint;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
@@ -20,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -184,6 +186,15 @@ public class Lucener<T extends DocSerializable<T>> {
                 } else {
                     error(entityClass, "LongField not fit");
                 }
+            } else if (f.isAnnotationPresent(BigIntegerField.class)) {
+                boolean fit = fitBigIntegerField(f);
+                if (fit) {
+                    BigIntegerField an = f.getAnnotation(BigIntegerField.class);
+                    f.setAccessible(true);
+                    fields.add(new FieldDesc(f, isCollection(f), BigInteger.class, an.stored(), false, false, true, an.index()));
+                } else {
+                    error(entityClass, "BigIntegerField not fit");
+                }
             } else if (f.isAnnotationPresent(FloatField.class)) {
                 boolean fit = fitFloatField(f);
                 if (fit) {
@@ -240,7 +251,7 @@ public class Lucener<T extends DocSerializable<T>> {
             allFields.put(name, Collections.singletonList(field));
             if (field.isTokenized()) {
                 TextField tf = field.getField().getAnnotation(TextField.class);
-                Analyzer fieldAnalyzer = tf.analyzer() == null ? new IKAnalyzer(tf.ikSmart()) : (tf.analyzer() == IKAnalyzer.class ? new IKAnalyzer(tf.ikSmart()) : tf.analyzer().newInstance());
+                Analyzer fieldAnalyzer = tf.analyzer() == null ? new IKAnalyzer(tf.ikSmart()) : (tf.analyzer() == IKAnalyzer.class ? new IKAnalyzer(tf.ikSmart()) : tf.analyzer().getDeclaredConstructor().newInstance());
                 fieldAnalyzers.put(name, fieldAnalyzer);
             }
         }
@@ -251,7 +262,7 @@ public class Lucener<T extends DocSerializable<T>> {
                 FieldDesc field = item.get(item.size() - 1);
                 if (field.isTokenized()) {
                     TextField tf = field.getField().getAnnotation(TextField.class);
-                    Analyzer fieldAnalyzer = tf.analyzer() == null ? new IKAnalyzer(tf.ikSmart()) : (tf.analyzer() == IKAnalyzer.class ? new IKAnalyzer(tf.ikSmart()) : tf.analyzer().newInstance());
+                    Analyzer fieldAnalyzer = tf.analyzer() == null ? new IKAnalyzer(tf.ikSmart()) : (tf.analyzer() == IKAnalyzer.class ? new IKAnalyzer(tf.ikSmart()) : tf.analyzer().getDeclaredConstructor().newInstance());
                     fieldAnalyzers.put(name, fieldAnalyzer);
                 }
             }
@@ -299,6 +310,17 @@ public class Lucener<T extends DocSerializable<T>> {
                     subFields.add(ret);
                 } else {
                     error(c, "LongField not fit");
+                }
+            } else if (item.isAnnotationPresent(BigIntegerField.class)) {
+                boolean fit = fitBigIntegerField(item);
+                if (fit) {
+                    BigIntegerField an = item.getAnnotation(BigIntegerField.class);
+                    item.setAccessible(true);
+                    List<FieldDesc> ret = new ArrayList<>(context);
+                    ret.add(new FieldDesc(item, isCollection(item), BigInteger.class, an.stored(), false, false, true, an.index()));
+                    subFields.add(ret);
+                } else {
+                    error(c, "BigIntegerField not fit");
                 }
             } else if (item.isAnnotationPresent(FloatField.class)) {
                 boolean fit = fitFloatField(item);
@@ -370,6 +392,7 @@ public class Lucener<T extends DocSerializable<T>> {
                 || Objects.equals(rt, Float.class)
                 || Objects.equals(rt, Double.class)
                 || Objects.equals(rt, String.class)
+                || Objects.equals(rt, BigInteger.class)
                 || rt.isPrimitive();
     }
 
@@ -435,6 +458,25 @@ public class Lucener<T extends DocSerializable<T>> {
             return rt == long.class || rt == Long.class;
         } else {
             return f.getType() == long.class || f.getType() == Long.class;
+        }
+    }
+
+    /**
+     * with BigInteger field is ok ?
+     *
+     * @param f
+     * @return
+     */
+    public static boolean fitBigIntegerField(Field f) {
+        if (Collection.class.isAssignableFrom(f.getType())) {
+            if (!(f.getType() == Set.class || f.getType() == List.class || f.getType() == Collection.class)) {
+                return false;
+            }
+            ParameterizedType pt = (ParameterizedType) f.getGenericType();
+            Class<?> rt = (Class<?>) pt.getActualTypeArguments()[0];
+            return rt == BigInteger.class;
+        } else {
+            return f.getType() == BigInteger.class;
         }
     }
 
@@ -627,6 +669,18 @@ public class Lucener<T extends DocSerializable<T>> {
                                             }
                                         }
                                     });
+                                } else if (inner == BigInteger.class) {
+                                    Collection<BigInteger> c = (Collection<BigInteger>) v;
+                                    c.forEach(i -> {
+                                        if (i != null) {
+                                            if (f.isIndex()) {
+                                                doc.add(new BigIntegerPoint(name, i));
+                                            }
+                                            if (f.isStored()) {
+                                                doc.add(new StoredField(name, i.toString()));
+                                            }
+                                        }
+                                    });
                                 } else if (inner == float.class || inner == Float.class) {
                                     Collection<Float> c = (Collection<Float>) v;
                                     c.forEach(i -> {
@@ -653,7 +707,7 @@ public class Lucener<T extends DocSerializable<T>> {
                                                 doc.add(new StoredField(name, i));
                                             }
                                             if (f.isSort()) {
-                                                doc.add(new SortedNumericDocValuesField(name, NumericUtils.floatToSortableInt(i.floatValue())));
+                                                doc.add(new SortedNumericDocValuesField(name, NumericUtils.doubleToSortableLong(i)));
                                             }
                                         }
                                     });
@@ -694,6 +748,14 @@ public class Lucener<T extends DocSerializable<T>> {
                                     if (f.isSort()) {
                                         doc.add(new SortedNumericDocValuesField(name, i));
                                     }
+                                } else if (inner == BigInteger.class) {
+                                    BigInteger i = (BigInteger) v;
+                                    if (f.isIndex()) {
+                                        doc.add(new BigIntegerPoint(name, i));
+                                    }
+                                    if (f.isStored()) {
+                                        doc.add(new StoredField(name, String.valueOf(i)));
+                                    }
                                 } else if (inner == float.class || inner == Float.class) {
                                     Float i = (Float) v;
                                     if (f.isIndex()) {
@@ -715,7 +777,7 @@ public class Lucener<T extends DocSerializable<T>> {
                                         doc.add(new StoredField(name, i));
                                     }
                                     if (f.isSort()) {
-                                        int sortedNumber = NumericUtils.floatToSortableInt(i.floatValue());
+                                        long sortedNumber = NumericUtils.doubleToSortableLong(i);
                                         doc.add(new SortedNumericDocValuesField(name, sortedNumber));
                                     }
                                 } else if (inner == String.class) {
@@ -1035,6 +1097,8 @@ public class Lucener<T extends DocSerializable<T>> {
                 return IntPoint.newExactQuery(field, (Integer) v);
             } else if (type == long.class || type == Long.class) {
                 return LongPoint.newExactQuery(field, (Long) v);
+            } else if (type == BigInteger.class) {
+                return BigIntegerPoint.newExactQuery(field, (BigInteger) v);
             } else if (type == float.class || type == Float.class) {
                 return FloatPoint.newExactQuery(field, (Float) v);
             } else if (type == double.class || type == Double.class) {
