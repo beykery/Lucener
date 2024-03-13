@@ -43,6 +43,7 @@ public class LuceneIndexTest {
                     .z(4L)
                     .zz(4L)
                     .big(BigInteger.valueOf(i))
+                    .valid(i % 2 == 0)
                     .desc("desc")
                     .content("computer price is so high , and i want to go home . what are you thinking about ? what's wrong with you ? 天气也不错。")
                     .testVo(vo)                   // testVo.listInt = [1,2,3,4,5,6]

@@ -47,6 +47,9 @@ public class TestEntity extends DocSerializable<TestEntity> {
     @BigIntegerField(stored = true)
     private BigInteger big;
 
+    @BigIntegerField(stored = true)
+    private boolean valid;
+
     @StringField(stored = false)
     private Set<String> tags;
 

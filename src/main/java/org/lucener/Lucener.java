@@ -213,6 +213,15 @@ public class Lucener<T extends DocSerializable<T>> {
                 } else {
                     error(entityClass, "DoubleField not fit");
                 }
+            } else if (f.isAnnotationPresent(BooleanField.class)) {
+                boolean fit = fitBooleanField(f);
+                if (fit) {
+                    BooleanField an = f.getAnnotation(BooleanField.class);
+                    f.setAccessible(true);
+                    fields.add(new FieldDesc(f, isCollection(f), Boolean.class, an.stored(), false, false, true, true));
+                } else {
+                    error(entityClass, "BooleanField not fit");
+                }
             } else if (f.isAnnotationPresent(StringField.class)) {
                 boolean fit = fitStringField(f);
                 if (fit) {
@@ -344,6 +353,17 @@ public class Lucener<T extends DocSerializable<T>> {
                 } else {
                     error(c, "DoubleField not fit");
                 }
+            } else if (item.isAnnotationPresent(BooleanField.class)) {
+                boolean fit = fitBooleanField(item);
+                if (fit) {
+                    BooleanField an = item.getAnnotation(BooleanField.class);
+                    item.setAccessible(true);
+                    List<FieldDesc> ret = new ArrayList<>(context);
+                    ret.add(new FieldDesc(item, isCollection(item), Boolean.class, an.stored(), false, false, true, true));
+                    subFields.add(ret);
+                } else {
+                    error(c, "BooleanField not fit");
+                }
             } else if (item.isAnnotationPresent(StringField.class)) {
                 boolean fit = fitStringField(item);
                 if (fit) {
@@ -387,10 +407,12 @@ public class Lucener<T extends DocSerializable<T>> {
                 || Objects.equals(rt, long.class)
                 || Objects.equals(rt, float.class)
                 || Objects.equals(rt, double.class)
+                || Objects.equals(rt, boolean.class)
                 || Objects.equals(rt, Integer.class)
                 || Objects.equals(rt, Long.class)
                 || Objects.equals(rt, Float.class)
                 || Objects.equals(rt, Double.class)
+                || Objects.equals(rt, Boolean.class)
                 || Objects.equals(rt, String.class)
                 || Objects.equals(rt, BigInteger.class)
                 || rt.isPrimitive();
@@ -534,6 +556,24 @@ public class Lucener<T extends DocSerializable<T>> {
             return rt == String.class;
         } else {
             return f.getType() == String.class;
+        }
+    }
+
+    /**
+     * with boolean field is ok ?
+     * @param f
+     * @return
+     */
+    public static boolean fitBooleanField(Field f) {
+        if (Collection.class.isAssignableFrom(f.getType())) {
+            if (!(f.getType() == Set.class || f.getType() == List.class || f.getType() == Collection.class)) {
+                return false;
+            }
+            ParameterizedType pt = (ParameterizedType) f.getGenericType();
+            Class<?> rt = (Class<?>) pt.getActualTypeArguments()[0];
+            return rt == boolean.class || rt == Boolean.class;
+        } else {
+            return f.getType() == boolean.class || f.getType() == Boolean.class;
         }
     }
 
@@ -711,6 +751,13 @@ public class Lucener<T extends DocSerializable<T>> {
                                             }
                                         }
                                     });
+                                } else if (inner == Boolean.class) {
+                                    Collection<Boolean> c = (Collection<Boolean>) v;
+                                    c.forEach(i -> {
+                                        if (i != null) {
+                                            doc.add(new org.apache.lucene.document.StringField(name, i ? "true" : "false", f.isStored() ? org.apache.lucene.document.Field.Store.YES : org.apache.lucene.document.Field.Store.NO));
+                                        }
+                                    });
                                 } else if (inner == String.class) {
                                     Collection<String> c = (Collection<String>) v;
                                     c.forEach(i -> {
@@ -780,6 +827,9 @@ public class Lucener<T extends DocSerializable<T>> {
                                         long sortedNumber = NumericUtils.doubleToSortableLong(i);
                                         doc.add(new SortedNumericDocValuesField(name, sortedNumber));
                                     }
+                                } else if (inner == boolean.class || inner == Boolean.class) {
+                                    Boolean i = (Boolean) v;
+                                    doc.add(new org.apache.lucene.document.StringField(name, i ? "true" : "false", f.isStored() ? org.apache.lucene.document.Field.Store.YES : org.apache.lucene.document.Field.Store.NO));
                                 } else if (inner == String.class) {
                                     String i = (String) v;
                                     if (f.isTokenized()) {
@@ -1103,6 +1153,8 @@ public class Lucener<T extends DocSerializable<T>> {
                 return FloatPoint.newExactQuery(field, (Float) v);
             } else if (type == double.class || type == Double.class) {
                 return DoublePoint.newExactQuery(field, (Double) v);
+            } else if (type == boolean.class || type == Boolean.class) {
+                return new TermQuery(new Term(field, ((Boolean) v) ? "true" : "false"));
             } else if (type == String.class) {
                 return new TermQuery(new Term(field, (String) v));
             }
