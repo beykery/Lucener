@@ -561,6 +561,7 @@ public class Lucener<T extends DocSerializable<T>> {
 
     /**
      * with boolean field is ok ?
+     *
      * @param f
      * @return
      */
@@ -1346,6 +1347,33 @@ public class Lucener<T extends DocSerializable<T>> {
      */
     public boolean maybeRefresh() throws IOException {
         return searcherManager.maybeRefresh();
+    }
+
+    /**
+     * refresh with blocking
+     *
+     * @throws IOException
+     */
+    public void maybeRefreshBlocking() throws IOException {
+        searcherManager.maybeRefreshBlocking();
+    }
+
+    /**
+     * refresh listener
+     *
+     * @param listener
+     */
+    public void addRefreshListener(ReferenceManager.RefreshListener listener) {
+        searcherManager.addListener(listener);
+    }
+
+    /**
+     * remove refresh listener
+     *
+     * @param listener
+     */
+    public void removeRefreshListener(ReferenceManager.RefreshListener listener) {
+        searcherManager.removeListener(listener);
     }
 
     /**
