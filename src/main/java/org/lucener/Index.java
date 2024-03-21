@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
 public @interface Index {
 
     /**
-     * index directory path
+     * index root directory path
      *
      * @return
      */

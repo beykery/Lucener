@@ -75,7 +75,7 @@ public class Lucener<T extends DocSerializable<T>> {
     /**
      * root path for index directory
      */
-    private static final String ROOT = "./.indices/";
+    private static final String ROOT_DEFAULT = "./.indices/";
 
     /*
       init
@@ -102,12 +102,12 @@ public class Lucener<T extends DocSerializable<T>> {
      * @param entityClass
      * @return
      */
-    public synchronized static <V> Lucener forClass(Class<? extends DocSerializable<V>> entityClass, String dir) throws Exception {
+    public synchronized static <V> Lucener forClass(Class<? extends DocSerializable<V>> entityClass, String root) throws Exception {
         if (knownIndex.containsKey(entityClass)) {
             return knownIndex.get(entityClass);
         }
         if (DocSerializable.class.isAssignableFrom(entityClass)) {
-            Lucener entityRepresentation = new Lucener<>(entityClass, dir);
+            Lucener entityRepresentation = new Lucener<>(entityClass, root);
             knownIndex.put(entityClass, entityRepresentation);
             return entityRepresentation;
         } else {
@@ -119,10 +119,11 @@ public class Lucener<T extends DocSerializable<T>> {
     /**
      * init class for representation
      *
-     * @param entityClass
+     * @param entityClass entity class
+     * @param root        root path
      * @throws IOException
      */
-    private <U> Lucener(Class<? extends DocSerializable<U>> entityClass, String dir) throws Exception {
+    private <U> Lucener(Class<? extends DocSerializable<U>> entityClass, String root) throws Exception {
         type = entityClass;
         verifyIndexAnnotation(entityClass);
         Index ian = entityClass.getAnnotation(Index.class);
@@ -130,10 +131,11 @@ public class Lucener<T extends DocSerializable<T>> {
          * persist to disk or not
          */
         boolean persistence = ian.persistence();
-        dir = dir == null ? ian.value() : dir;
-        if (dir.isEmpty()) {
-            dir = ROOT + ian.prefix() + replaceAll(entityClass.getName(), '.', '/') + "/";
+        root = root == null ? ian.value() : root;
+        if (root.isEmpty()) {
+            root = ROOT_DEFAULT;
         }
+        String dir = (root.endsWith("/") ? root : root + "/") + ian.prefix() + replaceAll(entityClass.getName(), '.', '/') + "/";
         Path path = Paths.get(dir);
         File file = path.toFile();
         indexPath = file.getAbsolutePath();

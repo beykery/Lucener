@@ -19,7 +19,7 @@ public class LuceneIndexTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        lucener = Lucener.forClass(TestEntity.class);
+        lucener = Lucener.forClass(TestEntity.class,"./.indices/test/");
     }
 
     @Test
