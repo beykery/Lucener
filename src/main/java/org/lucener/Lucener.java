@@ -1072,7 +1072,7 @@ public class Lucener<T extends DocSerializable<T>> {
      * @return
      */
     public QueryResult<T> query(String field, Object v, int n, Sort sort) throws Exception {
-        return queryAfter((ScoreDoc) null, field, v, n, sort);
+        return queryAfter((FieldDoc) null, field, v, n, sort);
     }
 
     /**
@@ -1086,7 +1086,7 @@ public class Lucener<T extends DocSerializable<T>> {
      * @throws Exception
      */
     public QueryResult<T> queryAfter(T after, String field, Object v, int n, Sort sort) throws Exception {
-        return queryAfter(after != null ? new ScoreDoc(after.doc, after.score, after.shardIndex) : null, field, v, n, sort);
+        return queryAfter(after != null ? new FieldDoc(after.doc, after.score) : null, field, v, n, sort);
     }
 
     /**
@@ -1099,13 +1099,13 @@ public class Lucener<T extends DocSerializable<T>> {
      * @return
      * @throws Exception
      */
-    public QueryResult<T> queryAfter(ScoreDoc after, String field, Object v, int n, Sort sort) throws Exception {
+    public QueryResult<T> queryAfter(FieldDoc after, String field, Object v, int n, Sort sort) throws Exception {
         QueryResult<T> queryResult = null;
         Query query = buildExactQuery(field, v);
         if (query != null) {
-            if (sort != null && after != null) {
-                after = (after instanceof FieldDoc) ? after : new FieldDoc(after.doc, after.score);
-            }
+//            if (sort != null && after != null) {
+//                after = (after instanceof FieldDoc) ? after : new FieldDoc(after.doc, after.score);
+//            }
             queryResult = queryAfter(after, query, n, sort);
         }
         return queryResult == null ? QueryResult.empty() : queryResult;
@@ -1131,7 +1131,7 @@ public class Lucener<T extends DocSerializable<T>> {
      */
     public QueryResult<T> all(T after, int n, Sort sort) throws Exception {
         Query q = new MatchAllDocsQuery();
-        return queryAfter(after != null ? new ScoreDoc(after.doc, after.score, after.shardIndex) : null, q, n, sort);
+        return queryAfter(after != null ? new FieldDoc(after.doc, after.score) : null, q, n, sort);
     }
 
     /**
@@ -1228,7 +1228,7 @@ public class Lucener<T extends DocSerializable<T>> {
      * @return
      * @throws Exception
      */
-    public QueryResult<T> queryAfter(ScoreDoc after, Query query, int n, Sort sort) throws Exception {
+    public QueryResult<T> queryAfter(FieldDoc after, Query query, int n, Sort sort) throws Exception {
         IndexSearcher indexSearcher = null;
         long total;
         List<T> ret = new ArrayList<>(n);
