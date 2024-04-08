@@ -1086,7 +1086,7 @@ public class Lucener<T extends DocSerializable<T>> {
      * @throws Exception
      */
     public QueryResult<T> queryAfter(T after, String field, Object v, int n, Sort sort) throws Exception {
-        return queryAfter(after != null ? new FieldDoc(after.doc, after.score) : null, field, v, n, sort);
+        return queryAfter(after != null ? new FieldDoc(after.doc, after.score, sort == null ? new Object[]{docId.toString()} : Arrays.stream(sort.getSort()).map(SortField::getField).toArray()) : null, field, v, n, sort);
     }
 
     /**
@@ -1131,7 +1131,7 @@ public class Lucener<T extends DocSerializable<T>> {
      */
     public QueryResult<T> all(T after, int n, Sort sort) throws Exception {
         Query q = new MatchAllDocsQuery();
-        return queryAfter(after != null ? new FieldDoc(after.doc, after.score) : null, q, n, sort);
+        return queryAfter(after != null ? new FieldDoc(after.doc, after.score, sort == null ? new Object[]{docId.toString()} : Arrays.stream(sort.getSort()).map(SortField::getField).toArray()) : null, q, n, sort);
     }
 
     /**
