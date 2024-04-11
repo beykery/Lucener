@@ -19,7 +19,7 @@ public class LuceneIndexTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        lucener = Lucener.forClass(TestEntity.class,"./.indices/test/");
+        lucener = Lucener.forClass(TestEntity.class, "./.indices/test/");
     }
 
     @Test
@@ -40,8 +40,8 @@ public class LuceneIndexTest {
                     .dd(1.0)
                     .f(3f)
                     .ff(3f)
-                    .z(4L)
-                    .zz(4L)
+                    .z((long) i)
+                    .zz(i)
                     .big(BigInteger.valueOf(i))
                     .valid(i % 2 == 0)
                     .desc("desc")
@@ -53,6 +53,16 @@ public class LuceneIndexTest {
             lucener.index(en);
         }
         lucener.commit();
+    }
+
+    @Test
+    public void all() throws Exception {
+        Sort sort = new Sort(new SortedNumericSortField("z", SortField.Type.LONG, true));
+        QueryResult<TestEntity> ret = lucener.all(null, 2, sort);
+        while (ret.size() > 0) {
+            System.out.println(ret);
+            ret = lucener.all(ret.getResult().get(ret.size() - 1), 2, sort);
+        }
     }
 
     @Test

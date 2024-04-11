@@ -874,6 +874,18 @@ public class Lucener<T extends DocSerializable<T>> {
     }
 
     /**
+     * value for sortField
+     *
+     * @param root
+     * @param sf
+     * @return
+     */
+    private Object value(T root, SortField sf) throws IllegalAccessException {
+        List<FieldDesc> descs = allFields.get(sf.getField());
+        return value(descs, root);
+    }
+
+    /**
      * @param fd
      * @param root
      * @return
@@ -1131,7 +1143,13 @@ public class Lucener<T extends DocSerializable<T>> {
      */
     public QueryResult<T> all(T after, int n, Sort sort) throws Exception {
         Query q = new MatchAllDocsQuery();
-        return queryAfter(after != null ? new FieldDoc(after.doc, after.score, sort == null ? new Object[]{docId.toString()} : Arrays.stream(sort.getSort()).map(SortField::getField).toArray()) : null, q, n, sort);
+        return queryAfter(after != null ? new FieldDoc(after.doc, after.score, sort == null ? new Object[]{} : Arrays.stream(sort.getSort()).map(f -> {
+            try {
+                return value(after, f);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }).toArray()) : null, q, n, sort);
     }
 
     /**
