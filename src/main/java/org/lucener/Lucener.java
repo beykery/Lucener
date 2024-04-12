@@ -1076,6 +1076,27 @@ public class Lucener<T extends DocSerializable<T>> {
     }
 
     /**
+     * query
+     *
+     * @param after
+     * @param query
+     * @param n
+     * @param sort
+     * @return
+     * @throws Exception
+     */
+    public QueryResult<T> query(T after, Query query, int n, Sort sort) throws Exception {
+        FieldDoc fd = after != null ? new FieldDoc(after.doc, after.score, sort == null ? new Object[]{} : Arrays.stream(sort.getSort()).map(f -> {
+            try {
+                return value(after, f);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }).toArray()) : null;
+        return queryAfter(fd, query, n, sort);
+    }
+
+    /**
      * query by field value
      *
      * @param field simpy field or complex field as a.b.c
@@ -1098,7 +1119,13 @@ public class Lucener<T extends DocSerializable<T>> {
      * @throws Exception
      */
     public QueryResult<T> queryAfter(T after, String field, Object v, int n, Sort sort) throws Exception {
-        return queryAfter(after != null ? new FieldDoc(after.doc, after.score, sort == null ? new Object[]{docId.toString()} : Arrays.stream(sort.getSort()).map(SortField::getField).toArray()) : null, field, v, n, sort);
+        return queryAfter(after != null ? new FieldDoc(after.doc, after.score, sort == null ? new Object[]{} : Arrays.stream(sort.getSort()).map(f -> {
+            try {
+                return value(after, f);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }).toArray()) : null, field, v, n, sort);
     }
 
     /**
