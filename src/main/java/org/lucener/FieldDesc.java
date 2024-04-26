@@ -15,6 +15,7 @@ public class FieldDesc {
     private boolean tokenized;
     private boolean end;
     private boolean index;
+    private boolean justSize;
 
     /**
      * construct
@@ -38,6 +39,23 @@ public class FieldDesc {
      * @param tokenized
      */
     public FieldDesc(Field field, boolean collection, Class inner, boolean stored, boolean sort, boolean tokenized, boolean end, boolean index) {
+        this(field, collection, inner, stored, sort, tokenized, end, index, false);
+    }
+
+    /**
+     * construct
+     *
+     * @param field
+     * @param collection
+     * @param inner
+     * @param stored
+     * @param sort
+     * @param tokenized
+     * @param end
+     * @param index
+     * @param justSize
+     */
+    public FieldDesc(Field field, boolean collection, Class inner, boolean stored, boolean sort, boolean tokenized, boolean end, boolean index, boolean justSize) {
         this.field = field;
         this.collection = collection;
         this.inner = inner;
@@ -46,6 +64,7 @@ public class FieldDesc {
         this.tokenized = tokenized;
         this.end = end;
         this.index = index;
+        this.justSize = justSize;
     }
 
     public boolean isCollection() {
@@ -78,6 +97,15 @@ public class FieldDesc {
 
     public boolean isIndex() {
         return index;
+    }
+
+    /**
+     * just size
+     *
+     * @return
+     */
+    public boolean isJustSize() {
+        return justSize;
     }
 
     @Override

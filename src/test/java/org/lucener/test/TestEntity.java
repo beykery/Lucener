@@ -50,9 +50,11 @@ public class TestEntity extends DocSerializable<TestEntity> {
     @BooleanField(stored = true)
     private boolean valid;
 
+    @SizeField(stored = true, sort = true)
     @StringField(stored = false)
     private Set<String> tags;
 
+    @SizeField(stored = true, sort = true)
     private List<TestVo> vos;
     private TestVo testVo;
 

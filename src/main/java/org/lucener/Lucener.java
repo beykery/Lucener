@@ -155,11 +155,24 @@ public class Lucener<T extends DocSerializable<T>> {
         /**
          * sub-field as a.b.c
          */
-        List<List<FieldDesc>> subFields1 = new ArrayList<>();
+        List<List<FieldDesc>> subFieldsAll = new ArrayList<>();
         List<Field> allFiled = new ArrayList<>();
         allField(entityClass, allFiled);
         // annotated field
         for (Field f : allFiled) {
+            // size field
+            if (isCollection(f)) {
+                if (f.isAnnotationPresent(SizeField.class)) {
+                    boolean fit = fitSizeField(f);
+                    if (fit) {
+                        SizeField an = f.getAnnotation(SizeField.class);
+                        f.setAccessible(true);
+                        fields.add(new FieldDesc(f, true, Integer.class, an.stored(), an.sort(), false, true, an.index(), true));
+                    } else {
+                        error(entityClass, "SizeField not fit");
+                    }
+                }
+            }
             // doc id
             if (docId == null && f.isAnnotationPresent(DocId.class)) {
                 boolean fit = fitDocId(f);
@@ -247,7 +260,7 @@ public class Lucener<T extends DocSerializable<T>> {
             else if (!isPrimitive(f)) {
                 List<List<FieldDesc>> subFields = new ArrayList<>();
                 subFields(new ArrayList<>(), f, subFields);
-                subFields1.addAll(subFields);
+                subFieldsAll.addAll(subFields);
             }
         }
         // id exist ?
@@ -257,8 +270,9 @@ public class Lucener<T extends DocSerializable<T>> {
         // all fields
         Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
         allFields = new HashMap<>();
+        // fields
         for (FieldDesc field : fields) {
-            String name = field.getField().getName();
+            String name = field.isJustSize() ? field.getField().getName() + "-size" : field.getField().getName();
             allFields.put(name, Collections.singletonList(field));
             if (field.isTokenized()) {
                 TextField tf = field.getField().getAnnotation(TextField.class);
@@ -266,11 +280,15 @@ public class Lucener<T extends DocSerializable<T>> {
                 fieldAnalyzers.put(name, fieldAnalyzer);
             }
         }
-        for (List<FieldDesc> item : subFields1) {
+        // sub-fields
+        for (List<FieldDesc> item : subFieldsAll) {
             if (!item.isEmpty()) {
                 String name = item.stream().map(f -> f.getField().getName()).collect(Collectors.joining("."));
-                allFields.put(name, item);
                 FieldDesc field = item.get(item.size() - 1);
+                if (field.isJustSize()) {
+                    name = name + "-size";
+                }
+                allFields.put(name, item);
                 if (field.isTokenized()) {
                     TextField tf = field.getField().getAnnotation(TextField.class);
                     Analyzer fieldAnalyzer = tf.analyzer() == null ? new IKAnalyzer(tf.ikSmart()) : (tf.analyzer() == IKAnalyzer.class ? new IKAnalyzer(tf.ikSmart()) : tf.analyzer().getDeclaredConstructor().newInstance());
@@ -292,7 +310,7 @@ public class Lucener<T extends DocSerializable<T>> {
      * @param f
      * @return
      */
-    public static void subFields(List<FieldDesc> context, Field f, List<List<FieldDesc>> subFields) {
+    public static void subFields(List<FieldDesc> context, Field f, List<List<FieldDesc>> result) {
         f.setAccessible(true);
         boolean collection = isCollection(f);
         Class<?> c = getInnerType(f);
@@ -300,6 +318,21 @@ public class Lucener<T extends DocSerializable<T>> {
         List<Field> all = new ArrayList<>();
         allField(c, all);
         for (Field item : all) {
+            // size field
+            if (isCollection(item)) {
+                if (item.isAnnotationPresent(SizeField.class)) {
+                    boolean fit = fitSizeField(item);
+                    if (fit) {
+                        SizeField an = item.getAnnotation(SizeField.class);
+                        item.setAccessible(true);
+                        List<FieldDesc> ret = new ArrayList<>(context);
+                        ret.add(new FieldDesc(item, true, Integer.class, an.stored(), an.sort(), false, true, an.index(), true));
+                        result.add(ret);
+                    } else {
+                        error(c, "SizeField not fit");
+                    }
+                }
+            }
             if (item.isAnnotationPresent(IntField.class)) {
                 boolean fit = fitIntField(item);
                 if (fit) {
@@ -307,7 +340,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
                     ret.add(new FieldDesc(item, isCollection(item), Integer.class, an.stored(), an.sort(), false, true, an.index()));
-                    subFields.add(ret);
+                    result.add(ret);
                 } else {
                     error(c, "IntField not fit");
                 }
@@ -318,7 +351,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
                     ret.add(new FieldDesc(item, isCollection(item), Long.class, an.stored(), an.sort(), false, true, an.index()));
-                    subFields.add(ret);
+                    result.add(ret);
                 } else {
                     error(c, "LongField not fit");
                 }
@@ -329,7 +362,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
                     ret.add(new FieldDesc(item, isCollection(item), BigInteger.class, an.stored(), false, false, true, an.index()));
-                    subFields.add(ret);
+                    result.add(ret);
                 } else {
                     error(c, "BigIntegerField not fit");
                 }
@@ -340,7 +373,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
                     ret.add(new FieldDesc(item, isCollection(item), Float.class, an.stored(), an.sort(), false, true, an.index()));
-                    subFields.add(ret);
+                    result.add(ret);
                 } else {
                     error(c, "FloatField not fit");
                 }
@@ -351,7 +384,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
                     ret.add(new FieldDesc(item, isCollection(item), Double.class, an.stored(), an.sort(), false, true, an.index()));
-                    subFields.add(ret);
+                    result.add(ret);
                 } else {
                     error(c, "DoubleField not fit");
                 }
@@ -362,7 +395,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
                     ret.add(new FieldDesc(item, isCollection(item), Boolean.class, an.stored(), false, false, true, true));
-                    subFields.add(ret);
+                    result.add(ret);
                 } else {
                     error(c, "BooleanField not fit");
                 }
@@ -373,7 +406,7 @@ public class Lucener<T extends DocSerializable<T>> {
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
                     ret.add(new FieldDesc(item, isCollection(item), String.class, an.stored(), false, false, true, true));
-                    subFields.add(ret);
+                    result.add(ret);
                 } else {
                     error(c, "StringField not fit");
                 }
@@ -384,14 +417,14 @@ public class Lucener<T extends DocSerializable<T>> {
                     item.setAccessible(true);
                     List<FieldDesc> ret = new ArrayList<>(context);
                     ret.add(new FieldDesc(item, isCollection(item), String.class, an.stored(), false, true, true, true));
-                    subFields.add(ret);
+                    result.add(ret);
                 } else {
                     error(c, "TextField not fit");
                 }
             }
             // other field as a.b.c
             else if (!isPrimitive(item)) {
-                subFields(context, item, subFields);
+                subFields(context, item, result);
             }
         }
     }
@@ -540,6 +573,19 @@ public class Lucener<T extends DocSerializable<T>> {
         } else {
             return f.getType() == double.class || f.getType() == Double.class;
         }
+    }
+
+    /**
+     * with size field is ok ?
+     *
+     * @param f
+     * @return
+     */
+    public static boolean fitSizeField(Field f) {
+        if (Collection.class.isAssignableFrom(f.getType())) {
+            return f.getType() == Set.class || f.getType() == List.class || f.getType() == Collection.class;
+        }
+        return false;
     }
 
     /**
