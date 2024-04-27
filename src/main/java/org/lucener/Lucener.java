@@ -272,7 +272,7 @@ public class Lucener<T extends DocSerializable<T>> {
         allFields = new HashMap<>();
         // fields
         for (FieldDesc field : fields) {
-            String name = field.isJustSize() ? field.getField().getName() + "-size" : field.getField().getName();
+            String name = field.isJustSize() ? field.getField().getName() + ".size" : field.getField().getName();
             allFields.put(name, Collections.singletonList(field));
             if (field.isTokenized()) {
                 TextField tf = field.getField().getAnnotation(TextField.class);
@@ -286,7 +286,7 @@ public class Lucener<T extends DocSerializable<T>> {
                 String name = item.stream().map(f -> f.getField().getName()).collect(Collectors.joining("."));
                 FieldDesc field = item.get(item.size() - 1);
                 if (field.isJustSize()) {
-                    name = name + "-size";
+                    name = name + ".size";
                 }
                 allFields.put(name, item);
                 if (field.isTokenized()) {
@@ -722,6 +722,21 @@ public class Lucener<T extends DocSerializable<T>> {
                     final Document doc = new Document();
                     for (List<FieldDesc> fs : allFields.values()) {
                         final FieldDesc f = fs.get(fs.size() - 1);  // the end
+                        if (f.isJustSize()) {
+                            String name = name(fs);
+                            name = name + ".size";
+                            final int size = size(fs, ob);
+                            if (f.isIndex()) {
+                                doc.add(new IntPoint(name, size));
+                            }
+                            if (f.isStored()) {
+                                doc.add(new StoredField(name, size));
+                            }
+                            if (f.isSort()) {
+                                doc.add(new SortedNumericDocValuesField(name, size));
+                            }
+                            continue;
+                        }
                         final Object v = value(fs, ob);
                         if (v != null) {
                             Class<?> inner = f.getInner();
@@ -940,6 +955,17 @@ public class Lucener<T extends DocSerializable<T>> {
     private static Object value(FieldDesc fd, Object root) throws IllegalAccessException {
         Object value = fd.getField().get(root);
         return value;
+    }
+
+    /**
+     * @param fs
+     * @param root
+     * @return
+     * @throws IllegalAccessException
+     */
+    private static int size(List<FieldDesc> fs, Object root) throws IllegalAccessException {
+        Collection c = (Collection) value(fs, root);
+        return c == null ? 0 : c.size();
     }
 
     /**

@@ -108,6 +108,14 @@ public class LuceneIndexTest {
         System.out.println(ret);
     }
 
+
+    @Test
+    public void queryBySize() throws Exception {
+        int v = 3;
+        QueryResult<TestEntity> ret = lucener.query("tags.size", v, 1, null);
+        System.out.println(ret);
+    }
+
     @Test
     public void queryByBig() throws Exception {
         int v = 4;

@@ -9,6 +9,6 @@ lucene util
 <dependency>
     <groupId>org.beykery</groupId>
     <artifactId>lucener</artifactId>
-    <version>1.2.6</version>
+    <version>1.2.7</version>
 </dependency>
 ```
