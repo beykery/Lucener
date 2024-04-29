@@ -5,10 +5,7 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.*;
-import org.apache.lucene.index.CheckIndex;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.Term;
+import org.apache.lucene.index.*;
 import org.apache.lucene.sandbox.document.BigIntegerPoint;
 import org.apache.lucene.search.*;
 import org.apache.lucene.store.ByteBuffersDirectory;
@@ -76,6 +73,10 @@ public class Lucener<T extends DocSerializable<T>> {
      * root path for index directory
      */
     private static final String ROOT_DEFAULT = "./.indices/";
+    /**
+     * _doc field
+     */
+    private static final Set<String> docSet = Collections.singleton("_doc");
 
     /*
       init
@@ -1337,6 +1338,7 @@ public class Lucener<T extends DocSerializable<T>> {
 
     /**
      * query after
+     * not thread safe
      *
      * @param after
      * @param query
@@ -1355,10 +1357,13 @@ public class Lucener<T extends DocSerializable<T>> {
             total = topDocs.totalHits.value;
             ScoreDoc[] hits = topDocs.scoreDocs;
             if (hits != null && hits.length > 0) {
+                final StoredFields sfReader = indexSearcher.getIndexReader().storedFields();
                 T dsi = (T) this.type.getDeclaredConstructor().newInstance();  // ? not very ok . . .
                 for (ScoreDoc sc : hits) {
                     int did = sc.doc;
-                    Document doc = indexSearcher.getIndexReader().storedFields().document(did);
+                    final DocumentStoredFieldVisitor visitor = new DocumentStoredFieldVisitor(docSet);
+                    sfReader.document(did, visitor);
+                    Document doc = visitor.getDocument();
                     String docString = doc.get("_doc");
                     if (docString != null) {
                         T d = dsi.deserialize(docString);
