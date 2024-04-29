@@ -720,6 +720,10 @@ public class Lucener<T extends DocSerializable<T>> {
                         throw new NullPointerException("doc id is null ");
                     }
                     final Document doc = new Document();
+                    // _doc section just store
+                    if (stored) {
+                        doc.add(new StoredField("_doc", ob.serialize()));
+                    }
                     for (List<FieldDesc> fs : allFields.values()) {
                         final FieldDesc f = fs.get(fs.size() - 1);  // the end
                         if (f.isJustSize()) {
@@ -904,10 +908,6 @@ public class Lucener<T extends DocSerializable<T>> {
                                 }
                             }
                         }
-                    }
-                    // _doc section just store
-                    if (stored) {
-                        doc.add(new StoredField("_doc", ob.serialize()));
                     }
                     doc.add(new org.apache.lucene.document.StringField(docId.getField().getName(), did, docId.isStored() ? org.apache.lucene.document.Field.Store.YES : org.apache.lucene.document.Field.Store.NO));
                     Term term = new Term(docId.getField().getName(), did);
