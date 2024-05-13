@@ -704,6 +704,31 @@ public class Lucener<T extends DocSerializable<T>> {
     }
 
     /**
+     * update
+     *
+     * @param t
+     * @param fields
+     */
+    public final void update(T t, String... fields) {
+        for (String field : fields) {
+            update(t, field);
+        }
+    }
+
+    /**
+     * update field
+     *
+     * @param t
+     * @param field
+     */
+    public final void update(T t, String field) {
+        List<FieldDesc> fds = allFields.get(field);
+        if (fds != null) {
+            //todo
+        }
+    }
+
+    /**
      * update object by term
      * <p>
      * first delete by term and then add documents
