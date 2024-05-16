@@ -24,7 +24,7 @@ public class LuceneIndexTest {
 
     @Test
     public void index() throws Exception {
-        int size = 1000000;
+        int size = 1;
         for (int i = 0; i < size; i++) {
             TestVo vo = TestVo.builder()
                     .listInt(Arrays.asList(1, 2, 3, 4, 5, 6))
@@ -63,6 +63,14 @@ public class LuceneIndexTest {
             System.out.println(ret);
             ret = lucener.all(ret.getResult().get(ret.size() - 1), 2, sort);
         }
+    }
+
+    @Test
+    public void update() throws Throwable {
+        TestEntity en = lucener.get("0");
+        en.setF(1000);
+        lucener.update(en, "f");
+        lucener.commit();
     }
 
     @Test
